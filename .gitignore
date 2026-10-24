@@ -1,0 +1,21 @@
+# Dữ liệu người chơi — KHÔNG commit (chứa hash mật khẩu + token phiên)
+tx_data.json
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Môi trường
+.env
+.env.*
+
+# Hệ điều hành / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Log
+*.log

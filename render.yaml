@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: tai-xiu-mini
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/state
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
