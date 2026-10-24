@@ -1626,7 +1626,13 @@ function refresh(){
 
 /* ===== toast =====*/
 let toastTimer;
-function toast(msg, ms=2200){
+/* bàn chơi có đang hiển thị? (sảnh chính / trang phụ mở = false) */
+function tableVisible(){
+  const h=$('homeScreen'), p=$('pageScreen');
+  return !(h&&h.classList.contains('open')) && !(p&&p.classList.contains('open'));
+}
+function toast(msg, ms=2200, tableOnly){
+  if(tableOnly && !tableVisible()) return;   /* không đè thông báo ván lên sảnh chính */
   els.toast.textContent = msg;
   els.toast.classList.add('show');
   clearTimeout(toastTimer);
@@ -1876,7 +1882,7 @@ function settle(fair, info){
         flash('flashGold');
         burst(bet>=1000000?220:130);
         Sound.win();
-        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THẮNG +${fmtComma(bet)}!`);
+        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THẮNG +${fmtComma(bet)}!`, 2200, true);
       } else {
         stats.losses++; stats.loseAmt+=bet; stats.worst=Math.max(stats.worst,bet);
         state.promo.cashback += bet*0.02;       /* hoàn trả thua 2% */
@@ -1884,10 +1890,10 @@ function settle(fair, info){
         shakeBoard();
         flash('flashRed');
         Sound.lose();
-        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THUA -${fmtComma(bet)}`);
+        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THUA -${fmtComma(bet)}`, 2200, true);
       }
     } else {
-      toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — ván #${fair.nonce}`);
+      toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — ván #${fair.nonce}`, 2200, true);
     }
     if(typeof Net.meBal==='number') state.balance=Net.meBal;   /* server là trọng tài */
     state.history.unshift({sum, result:isTai?'T':'X',
@@ -2171,21 +2177,36 @@ const Net={
   },
   applyTick(t){
     if(t.durs) this.durs=t.durs;
-    this.phase=t.phase; this.left=t.left; this.roundId=t.roundId; this.players=t.players||0;
+    this.phase=t.phase; this.roundId=t.roundId; this.players=t.players||0;
+    /* mốc nội suy: server gửi msLeft chính xác, client tự vẽ mượt mỗi 100ms */
+    this.msLeft = (typeof t.msLeft==='number') ? t.msLeft : (t.left*1000);
+    this.left = Math.max(0, Math.ceil(this.msLeft/1000));
+    this._tickAt = performance.now();
     if(t.pools){ state.poolTai=t.pools.tai; state.poolXiu=t.pools.xiu; }
     state.rolling = t.phase!=='betting';      /* chốt cược + kết quả = khóa bàn */
     const bar=$('roundBar');
     if(bar){
       bar.dataset.phase=t.phase;
       $('rbPhase').textContent = t.phase==='betting'?'MỞ CƯỢC':t.phase==='locked'?'CHỐT CƯỢC — XÓC ĐĨA':'KẾT QUẢ';
-      $('rbTime').textContent=t.left+'s';
       $('rbRound').textContent='#'+t.roundId;
       $('rbPlayers').textContent='👥 '+t.players;
-      const total=(this.durs&&this.durs[t.phase])||60;
-      $('rbFill').style.width=(Math.max(0,Math.min(1,t.left/total))*100).toFixed(1)+'%';
+      this.paintClock();
     }
     const fh=$('fairHashShort'); if(fh&&t.serverSeedHash) fh.textContent=t.serverSeedHash.slice(0,10)+'…'+t.serverSeedHash.slice(-6);
     refresh();
+  },
+  /* vẽ lại đồng hồ từ mốc msLeft — không phụ thuộc nhịp tick mạng */
+  paintClock(){
+    if(this._tickAt==null) return;
+    const bar=$('roundBar'); if(!bar) return;
+    const ms=Math.max(0, this.msLeft-(performance.now()-this._tickAt));
+    const total=((this.durs&&this.durs[this.phase])||60)*1000;
+    const tm=$('rbTime'); if(tm) tm.textContent=Math.ceil(ms/1000)+'s';
+    const fill=$('rbFill'); if(fill) fill.style.width=(Math.max(0,Math.min(1,ms/total))*100).toFixed(1)+'%';
+  },
+  startClock(){
+    if(this._ck) return;
+    this._ck=setInterval(()=>this.paintClock(),100);
   },
   connect(){
     if(this.es) this.es.close();
@@ -2196,7 +2217,7 @@ const Net={
       this.es.onmessage=ev=>{
         let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
         if(m.event==='tick'||m.event==='hello') this.applyTick(m);
-        else if(m.event==='round') this.applyTick({phase:m.phase,left:m.left,roundId:m.roundId,serverSeedHash:m.serverSeedHash,pools:{tai:0,xiu:0},players:0,durs:this.durs});
+        else if(m.event==='round') this.applyTick({phase:m.phase,left:m.left,msLeft:m.msLeft,roundId:m.roundId,serverSeedHash:m.serverSeedHash,pools:{tai:0,xiu:0},players:0,durs:this.durs});
         else if(m.event==='result'){ this._lastResultRound=m.roundId; this._sseResults=true; onRoundResult(m); }
       };
     }catch(e){ this.setOnline(false); }
@@ -2206,6 +2227,7 @@ const Net={
   startWatchdog(){
     if(this._wd) return;
     this._lastSig=''; this._stale=0;
+    this.startClock();          /* đồng hồ nội suy 100ms */
     this._wd=setInterval(()=>{
       if(!this.online) return;
       const sig=this.phase+'|'+this.left+'|'+this.roundId;

@@ -68,15 +68,25 @@ let S = {
   pools:{tai:0, xiu:0}, bets:{},   /* bets[token]={side,amount} */
   history:[]                        /* 40 ván gần nhất */
 };
+/* mốc kết thúc phase (ms) — đếm ngược theo đồng hồ thật, không trôi như setInterval */
+let phaseEndsAt = Date.now() + CFG.betPhase*1000;
+function phaseDur(p){ return p==='betting'?CFG.betPhase : p==='locked'?CFG.lockPhase : CFG.resultPhase; }
+function startPhase(p){
+  S.phase = p;
+  const d = phaseDur(p);
+  phaseEndsAt = Date.now() + d*1000;
+  S.left = d;
+}
+function msLeftNow(){ return Math.max(0, phaseEndsAt - Date.now()); }
 function newRound(){
   S.roundId++;
   /* chuỗi hash: seed ván sau = SHA256(seed ván trước + ':' + roundId) */
   S.serverSeed = S.nextSeed || crypto.randomBytes(32).toString('hex');
   S.serverSeedHash = sha256(S.serverSeed);
   S.nextSeed = sha256(S.serverSeed+':'+S.roundId);
-  S.phase='betting'; S.left=CFG.betPhase;
+  startPhase('betting');
   S.pools={tai:0,xiu:0}; S.bets={};
-  broadcast('round', {roundId:S.roundId, serverSeedHash:S.serverSeedHash, phase:S.phase, left:S.left});
+  broadcast('round', {roundId:S.roundId, serverSeedHash:S.serverSeedHash, phase:S.phase, left:S.left, msLeft:msLeftNow()});
 }
 function roll(){
   MSG_CUR='round:'+S.roundId; SEED_CUR=S.serverSeed;
@@ -99,7 +109,7 @@ function roll(){
             serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac}});
     u.history=u.history.slice(0,40);
   }
-  S.phase='result'; S.left=CFG.resultPhase;
+  startPhase('result');
   const ev={
     roundId:S.roundId, dice, sum, result,
     serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac,
@@ -117,18 +127,23 @@ function snapshotMe(){
   return null; /* server gửi 'me' riêng theo từng token trong sendTo */
 }
 
-/* ---------- vòng lặp 1 giây ---------- */
+/* ---------- vòng lặp 250ms: tính theo mốc thời gian, không trôi ---------- */
 setInterval(()=>{
-  S.left--;
-  if(S.phase==='betting' && S.left<=0){ S.phase='locked'; S.left=CFG.lockPhase; }
-  else if(S.phase==='locked' && S.left<=0){ roll(); }
-  else if(S.phase==='result' && S.left<=0){ newRound(); }
-  broadcast('tick', tickPayload());
-}, 1000);
+  let ms = phaseEndsAt - Date.now();
+  if(ms <= 0){
+    if(S.phase==='betting') startPhase('locked');
+    else if(S.phase==='locked') roll();
+    else if(S.phase==='result') newRound();
+    ms = phaseEndsAt - Date.now();
+  }
+  S.left = Math.max(0, Math.ceil(ms/1000));
+  broadcast('tick', tickPayload(ms));
+}, 250);
 
-function tickPayload(){
-  return { phase:S.phase, left:Math.max(0,S.left), roundId:S.roundId,
-           serverSeedHash:S.serverSeedHash, pools:S.pools, players:Object.keys(S.bets).length,
+function tickPayload(ms){
+  return { phase:S.phase, left:Math.max(0,S.left), msLeft:Math.max(0, Math.round(ms==null?msLeftNow():ms)),
+           roundId:S.roundId, serverSeedHash:S.serverSeedHash, pools:S.pools,
+           players:Object.keys(S.bets).length,
            durs:{betting:CFG.betPhase, locked:CFG.lockPhase, result:CFG.resultPhase} };
 }
 function leaderboard(){
@@ -140,7 +155,7 @@ function fullState(token){
   const u=token && DB.sessions[token] && DB.users[DB.sessions[token]];
   const me = u ? {id:u.id, email:u.email, name:u.name, balance:u.balance,
                   bet:S.bets[token]||null, wagered:u.wagered||0, rounds:u.rounds||0} : null;
-  return { ok:true, phase:S.phase, left:Math.max(0,S.left), roundId:S.roundId,
+  return { ok:true, phase:S.phase, left:Math.max(0,S.left), msLeft:msLeftNow(), roundId:S.roundId,
            serverSeedHash:S.serverSeedHash, pools:S.pools,
            players:Object.keys(S.bets).length,
            durs:{betting:CFG.betPhase, locked:CFG.lockPhase, result:CFG.resultPhase},
