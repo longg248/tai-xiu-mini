@@ -1,5 +1,8 @@
 # 🎲 TÀI XỈU MINI
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/longg248/tai-xiu-mini)
+[![Live demo](https://img.shields.io/badge/demo-localhost%3A8099-2ea44f?logo=googlechrome&logoColor=white)](#1-chạy-local)
+
 Game Tài Xỉu casino 2D dạng **server–client**: một Node.js server roll kết quả mỗi ván, nhiều người chơi cược chung qua **SSE + REST**, giao diện lobby theo mẫu sòng game.
 
 - **Client**: `tai_xiu.html` — 1 file duy nhất (HTML + CSS + JS inline), sân khấu 1600×900 tự scale.
@@ -59,6 +62,8 @@ git push -u origin main
 ---
 
 ## 3. Deploy lên Render (miễn phí, dễ nhất)
+
+> **Cách nhanh nhất:** bấm nút **Deploy to Render** ở đầu README (hoặc mở https://render.com/deploy?repo=https://github.com/longg248/tai-xiu-mini) → đăng nhập GitHub → **Apply**. Render tự đọc `render.yaml`.
 
 Render chạy được Node + SSE, phù hợp demo.
 
