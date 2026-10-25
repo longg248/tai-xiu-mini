@@ -82,8 +82,10 @@ const Net={
     if(t.pools){ state.poolTai=t.pools.tai; state.poolXiu=t.pools.xiu; }
     state.rolling = t.phase!=='betting';      /* chốt cược + kết quả = khóa bàn */
 
-    /* Chuyển sang phase locked (Chốt cược) → kích hoạt ngay animation xốc đĩa */
-    if(oldPhase==='betting' && t.phase==='locked' && !Dish.opened && !Dish.shaking){
+    /* Chuyển sang phase locked (Chốt cược) → kích hoạt animation xốc đĩa
+       (bỏ qua khi đang ở sảnh/bàn bài để không nghe tiếng xúc xắc) */
+    const inCards = (typeof CardsUI !== 'undefined' && !!CardsUI.active);
+    if(!inCards && oldPhase==='betting' && t.phase==='locked' && !Dish.opened && !Dish.shaking){
       Dish.shake(Math.min(3000, Math.max(1600, this.msLeft - 400)));
     }
 

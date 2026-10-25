@@ -531,6 +531,7 @@ const GAMES=[
   {id:'poker',  name:'POKER', icon:'♠️', desc:'Texas Hold’em', status:'soon'}
 ];
 function openLobby(focus){
+  if(typeof CardsUI !== 'undefined') CardsUI.closeAll(true);
   const cards=GAMES.map(g=>{
     const live=g.status==='live';
     const notified=!!state.promo.notify[g.id];
@@ -839,11 +840,11 @@ function openShare(){
 
 
 /* ---------- ĐIỀU HƯỚNG ---------- */
-function openHome(){ $('homeScreen').classList.add('open'); renderHome(); Sound.click(); }
+function openHome(){ if(typeof CardsUI !== 'undefined') CardsUI.closeAll(true); $('homeScreen').classList.add('open'); renderHome(); Sound.click(); }
 function closeHome(){ $('homeScreen').classList.remove('open'); }
 const LOBBY_GAMES=[
   {id:'taixiu',  icon:'🎲', name:'TÀI XỈU',   cat:'mini', live:true,  bg:'linear-gradient(160deg,#3d1a52,#140a20)'},
-  {id:'tienlen', icon:'🃏', name:'TIẾN LÊN',  cat:'bai',  live:true,  bg:'linear-gradient(160deg,#175e34,#061d10)'},
+  {id:'cards',   icon:'🃏', name:'SẢNH BÀI',  cat:'bai',  live:true,  bg:'linear-gradient(160deg,#175e34,#061d10)'},
   {id:'wheel',   icon:'🎯', name:'VÒNG QUAY', cat:'mini', live:true,  bg:'linear-gradient(160deg,#7a1fa8,#2d0a4d)'},
   {id:'xocxoc',  icon:'🥮', name:'XÓC XÓC',   cat:'mini', live:false, bg:'linear-gradient(160deg,#b3123f,#3d0512)'},
   {id:'nohu',    icon:'💎', name:'NỔ HŨ',     cat:'slot', live:false, bg:'linear-gradient(160deg,#0d3b8f,#071a3d)', jp:12048135},
@@ -883,7 +884,7 @@ function renderHome(){
     const id=t.dataset.lob; Sound.click();
     if(id==='taixiu'){ closeHome(); toast('Vào bàn #934042 — ván #'+Net.roundId); return; }
     if(id==='wheel'){ closeHome(); openWheel(); return; }
-    if(id==='tienlen'){ closeHome(); TienLen.startNewGame(); return; }
+    if(id==='cards'||id==='tienlen'){ closeHome(); CardsUI.openHub('tienlen13'); return; }
     closeHome(); openLobby(id);
   });
   /* --- bảng xếp hạng từ server --- */
@@ -922,6 +923,11 @@ $('homeFairLink').onclick=()=>{ closeHome(); openDrawer('fair'); };
 /* ESC từ trang chủ → về bàn chơi */
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape') return;
+  if(typeof CardsUI !== 'undefined' && CardsUI.active){
+    if(CardsUI.inRoom) CardsUI.leave();
+    else CardsUI.closeAll(true);
+    return;
+  }
   if($('pageScreen').classList.contains('open')){ closeModal(); openHome(); return; }   /* ESC = Đóng → Trang chủ */
   if($('histOverlay').classList.contains('open')){ closeHist(); return; }              /* ESC tắt panel lịch sử — ở lại bàn */
   if($('homeScreen').classList.contains('open')){ closeHome(); }
@@ -983,6 +989,11 @@ async function enterGame(u,msg){
   openHome();
   Sound.chip();
   toast(msg, 2600);
+  if(typeof CardsUI !== 'undefined' && CardsUI._pendingHall){
+    const h = CardsUI._pendingHall;
+    CardsUI._pendingHall = null;
+    setTimeout(() => CardsUI.openHub(h), 300);
+  }
 }
 async function applyUser(u){
   Auth.user=u;
@@ -1010,7 +1021,9 @@ document.querySelectorAll('[data-pnav]').forEach(el=>el.onclick=()=>{
 });
 
 function handleNav(nav){
+  if(typeof CardsUI !== 'undefined' && nav!=='cards') CardsUI.closeAll(true);
   if(nav==='home') openHome();
+  else if(nav==='cards') CardsUI.openHub('tienlen13');
   else if(nav==='lobby'||nav==='games') openLobby();
   else if(nav==='wheel') openWheel();
   else if(nav==='bacca') openLobby('bacca');
@@ -1022,7 +1035,7 @@ document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>handleNav(el.
 document.querySelectorAll('[data-game]').forEach(el=>el.onclick=()=>{
   const id=el.dataset.game;
   if(id==='wheel'){ openWheel(); return; }
-  if(id==='tienlen'){ closeHome(); TienLen.startNewGame(); return; }
+  if(id==='cards'||id==='tienlen'){ closeHome(); CardsUI.openHub('tienlen13'); return; }
   if(id==='taixiu'){ toast('Bạn đang chơi Tài Xỉu — phòng #934042'); return; }
   openLobby(id);
 });

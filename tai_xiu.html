@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/table.css">
 <link rel="stylesheet" href="css/wheel.css">
-<link rel="stylesheet" href="css/tienlen.css">
+<link rel="stylesheet" href="css/cards.css">
 <link rel="stylesheet" href="css/lobby.css">
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/responsive.css">
@@ -40,7 +40,7 @@
   <div class="topnav">
     <div class="logo"></div>
     <span class="t">TAIXIU • SÒNG MINI</span>
-    <div class="menu"><span class="ping"><i></i>PING <b id="pingVal">24ms</b></span><span data-nav="home">TRANG CHỦ</span><span data-nav="games">MINI GAME</span><span data-nav="promo">KHUYẾN MÃI</span><span data-nav="support">HỖ TRỢ 24/7</span></div>
+    <div class="menu"><span class="ping"><i></i>PING <b id="pingVal">24ms</b></span><span data-nav="home">TRANG CHỦ</span><span data-nav="cards">SẢNH BÀI</span><span data-nav="games">MINI GAME</span><span data-nav="promo">KHUYẾN MÃI</span><span data-nav="support">HỖ TRỢ 24/7</span></div>
   </div>
 
   <div class="badge" id="vipBadge" title="Thành viên VIP — bấm để xem hạng"></div>
@@ -221,82 +221,45 @@
     <div class="big-num" id="bigNum">+3,960,000</div>
   </div>
 
-  <!-- ===== MÀN HÌNH GAME: TIẾN LÊN MIỀN NAM 13 LÁ ===== -->
-  <div class="tienlen-screen" id="tienlenScreen">
-    <div class="tl-table">
-      <!-- Đầu trang -->
-      <div class="tl-header">
-        <div class="tl-logo">🃏 TIẾN LÊN <span>13 LÁ</span></div>
-        <div class="tl-room-info">BÀN 4 NGƯỜI · CƯỢC <b>50,000đ</b></div>
-        <div class="tl-header-actions">
-          <button class="tl-btn-exit" id="tlBtnExit">✕ RỜI BÀN</button>
-        </div>
-      </div>
-
-      <!-- Vị trí Bot trên (North) -->
-      <div class="tl-pos-top">
-        <div class="tl-player-box" id="tlPlayer2">
-          <div class="tl-avatar">T</div>
-          <div class="tl-info">
-            <div class="name">Tây Độc</div>
-            <div class="cards-count" id="tlBot2Count">13 lá</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vị trí Bot trái & phải (West & East) -->
-      <div class="tl-pos-left">
-        <div class="tl-player-box" id="tlPlayer1">
-          <div class="tl-avatar">B</div>
-          <div class="tl-info">
-            <div class="name">Bắc Kiếm</div>
-            <div class="cards-count" id="tlBot1Count">13 lá</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tl-pos-right">
-        <div class="tl-player-box" id="tlPlayer3">
-          <div class="tl-avatar">N</div>
-          <div class="tl-info">
-            <div class="name">Nam Thần</div>
-            <div class="cards-count" id="tlBot3Count">13 lá</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Khu vực giữa bàn (Bài vừa đánh) -->
-      <div class="tl-center-zone">
-        <div class="tl-played-cards" id="tlPlayedCards"></div>
-        <div class="tl-last-action" id="tlLastAction">Đang chờ ván mới…</div>
-      </div>
-
-      <!-- Khu vực Người chơi (South) -->
-      <div class="tl-pos-bottom">
-        <div class="tl-my-actions">
-          <button class="tl-btn-act tl-btn-sort" id="tlBtnSort">SẮP BÀI</button>
-          <button class="tl-btn-act tl-btn-play" id="tlBtnPlay" disabled>ĐÁNH BÀI</button>
-          <button class="tl-btn-act tl-btn-pass" id="tlBtnPass" disabled>BỎ LƯỢT</button>
-        </div>
-        <div class="tl-hand" id="tlMyHand"></div>
-        <div class="tl-player-box" id="tlPlayer0" style="margin-top:-6px">
-          <div class="tl-avatar" style="border-color:#00e5ff">B</div>
-          <div class="tl-info">
-            <div class="name">Bạn (Người chơi)</div>
-            <div class="bal">Số dư: <b id="tlMyBal">0</b>đ</div>
-          </div>
-        </div>
-      </div>
+  <!-- ===== SẢNH GAME BÀI MULTIPLAYER ===== -->
+  <div class="cards-hub" id="cardsHub">
+    <div class="ch-top">
+      <button class="ch-back" id="chBack">‹ SẢNH CHÍNH</button>
+      <div class="ch-brand">🃏 SẢNH GAME BÀI <span>MULTIPLAYER</span></div>
+      <div class="ch-user"><span id="chUserName">Khách</span><b id="chBalance">0</b></div>
     </div>
-
-    <!-- Modal kết thúc ván -->
-    <div class="tl-end-modal" id="tlEndModal">
-      <div class="tl-end-box">
-        <div class="tl-end-title" id="tlEndTitle">🎉 CHIẾN THẮNG!</div>
-        <div class="tl-end-desc" id="tlEndDesc"></div>
-        <button class="tl-end-btn" id="tlEndBtn">CHƠI TIẾP VÁN MỚI</button>
+    <div class="ch-body">
+      <div class="ch-left">
+        <div class="ch-sec-title">CHỌN SẢNH <i>Người chơi thật · Không bot</i></div>
+        <div class="ch-halls" id="chHalls"></div>
+        <div class="ch-note">💡 Bàn tự động ghép người chơi. Cần tối thiểu <b>2 người</b>, tất cả bấm <b>SẴN SÀNG</b> để bắt đầu. Mời bạn bè bằng nút <b>📋 MỜI BẠN</b> trong phòng chờ.</div>
       </div>
+      <div class="ch-right" id="chDetail"></div>
     </div>
+  </div>
+
+  <!-- ===== BÀN CHƠI GAME BÀI MULTIPLAYER ===== -->
+  <div class="cards-room" id="cardsRoom">
+    <div class="cr-top">
+      <button class="cr-back" id="crLeave">‹ RỜI BÀN</button>
+      <div class="cr-title">
+        <span id="crHallName">TIẾN LÊN 13 LÁ</span>
+        <b id="crStake">50.000</b>
+        <i id="crTable">BÀN #1</i>
+      </div>
+      <div class="cr-phase"><span id="crPhase">ĐANG CHỜ NGƯỜI</span><b id="crTurnLeft"></b></div>
+    </div>
+    <div class="cr-felt">
+      <div class="cr-seats" id="crSeats"></div>
+      <div class="cr-center" id="crCenter"></div>
+    </div>
+    <div class="cr-me" id="crMe"></div>
+    <div class="cr-log" id="crLog"></div>
+    <div class="cr-bottom">
+      <div class="cr-actions" id="crActions"></div>
+      <div class="cr-hand" id="crHand"></div>
+    </div>
+    <div class="cr-result" id="crResult"></div>
   </div>
 
   <!-- ===== PANEL LỊCH SỬ ĐÈ LÊN BÀN ===== -->
@@ -492,7 +455,7 @@
 <script src="js/game.js"></script>
 <script src="js/net.js"></script>
 <script src="js/wheel.js"></script>
-<script src="js/tienlen.js"></script>
+<script src="js/cards.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

@@ -43,7 +43,7 @@ const Dish={
       this.shaking=false;
       this.el.classList.remove('shaking');
       if(ring) ring.classList.remove('shaking');
-      Sound.thud();
+      if(!(typeof CardsUI !== 'undefined' && CardsUI.active)) Sound.thud();
       if(hint) hint.textContent='🖱 Giữ & KÉO dĩa theo hướng bạn muốn để nặn!';
       if(onDone) onDone();
     }, durationMs);

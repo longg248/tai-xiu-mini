@@ -103,11 +103,6 @@ refresh();
 })();
 $('netBanner').onclick=async()=>{ if(await Net.sync()){ location.reload(); } };
 
-/* Gắn sự kiện cho mini game Tiến Lên 13 lá */
-$('tlBtnPlay').onclick = () => TienLen.playSelected();
-$('tlBtnPass').onclick = () => TienLen.passTurn();
-$('tlBtnSort').onclick = () => TienLen.sortMyHand();
-$('tlBtnExit').onclick = () => TienLen.closeGame();
-$('tlEndBtn').onclick  = () => { $('tlEndModal').classList.remove('open'); TienLen.startNewGame(); };
+/* Sảnh bài multiplayer tự gắn sự kiện trong js/cards.js */
 
 

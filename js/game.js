@@ -77,7 +77,11 @@ let toastTimer;
 /* bàn chơi có đang hiển thị? (sảnh chính / trang phụ mở = false) */
 function tableVisible(){
   const h=$('homeScreen'), p=$('pageScreen');
+  if(typeof CardsUI !== 'undefined' && CardsUI.active) return false;   /* đang ở sảnh/bàn bài → không báo ván tài xỉu */
   return !(h&&h.classList.contains('open')) && !(p&&p.classList.contains('open'));
+}
+function cardsActive(){
+  return typeof CardsUI !== 'undefined' && !!CardsUI.active;
 }
 function toast(msg, ms=2200, tableOnly){
   if(tableOnly && !tableVisible()) return;   /* không đè thông báo ván lên sảnh chính */
@@ -206,6 +210,14 @@ function onRoundResult(d){
 }
 async function revealFair(fair, info){
   els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('pop','reveal'); });
+
+  /* Đang ở sảnh bài: bỏ toàn bộ animation/âm thanh xúc xắc, chỉ cập nhật số dư.
+     Vẫn úp lại đĩa (không phát âm thanh) để ván sau ở bàn Tài Xỉu hiển thị đúng. */
+  if(cardsActive()){
+    if(typeof Dish !== 'undefined') Dish.cover();
+    settle(fair, info);
+    return;
+  }
   
   Dish.onPeek=i=>{                                  /* viên thứ i lộ chấm khi kéo lòi viên đó */
     renderDie(els.d[i], fair.dice[i]);
@@ -242,6 +254,7 @@ function settle(fair, info){
   const bet=info.myAmt||0;
 
   setTimeout(()=>{
+    const quiet = cardsActive();
     state.rolling=false; state._frozenBal=undefined; state.myBet=null;
     state.side=null; state.bet=0;
     els.cellTai.textContent='0'; els.cellXiu.textContent='0';
@@ -252,22 +265,26 @@ function settle(fair, info){
         state.balance += bet;                    /* server đã hoàn stake + thưởng; đồng bộ lại bên dưới */
         stats.wins++; stats.winAmt+=bet; stats.best=Math.max(stats.best,bet);
         if(stats.streakType==='W') stats.streak++; else { stats.streakType='W'; stats.streak=1; }
-        els.ring.classList.add('win');
-        setTimeout(()=>els.ring.classList.remove('win'),1200);
-        flash('flashGold');
-        burst(bet>=1000000?220:130);
-        Sound.win();
-        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THẮNG +${fmtComma(bet)}!`, 2200, true);
+        if(!quiet){
+          els.ring.classList.add('win');
+          setTimeout(()=>els.ring.classList.remove('win'),1200);
+          flash('flashGold');
+          burst(bet>=1000000?220:130);
+          Sound.win();
+          toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THẮNG +${fmtComma(bet)}!`, 2200, true);
+        }
       } else {
         stats.losses++; stats.loseAmt+=bet; stats.worst=Math.max(stats.worst,bet);
         state.promo.cashback += bet*0.02;       /* hoàn trả thua 2% */
         if(stats.streakType==='L') stats.streak++; else { stats.streakType='L'; stats.streak=1; }
-        shakeBoard();
-        flash('flashRed');
-        Sound.lose();
-        toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THUA -${fmtComma(bet)}`, 2200, true);
+        if(!quiet){
+          shakeBoard();
+          flash('flashRed');
+          Sound.lose();
+          toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — THUA -${fmtComma(bet)}`, 2200, true);
+        }
       }
-    } else {
+    } else if(!quiet){
       toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — ván #${fair.nonce}`, 2200, true);
     }
     if(typeof Net.meBal==='number') state.balance=Net.meBal;   /* server là trọng tài */

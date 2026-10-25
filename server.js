@@ -11,6 +11,7 @@ const http  = require('http');
 const fs    = require('fs');
 const path  = require('path');
 const crypto= require('crypto');
+const { createCards } = require('./cards-server');
 
 const FAST  = process.argv.includes('--fast');
 const CFG = {
@@ -320,11 +321,36 @@ function userByToken(token){ return token && DB.sessions[token] && DB.users[DB.s
 function publicUser(u){ return {id:u.id, email:u.email, name:u.name, balance:u.balance, wagered:u.wagered||0, rounds:u.rounds||0}; }
 function newToken(email){ const t=rid(); DB.sessions[t]=email; return t; }
 
+/* ---------- sảnh game bài multiplayer ---------- */
+const Cards = createCards({
+  getUser: userByToken,
+  onBalance(token, delta){
+    const u = userByToken(token);
+    if(!u) return;
+    u.balance = Math.max(0, Math.round((u.balance || 0) + Number(delta || 0)));
+    saveDB();
+    Supabase.syncUser(u);
+  },
+  json,
+  body
+});
+
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 
 const server=http.createServer(async (req,res)=>{
   const url=new URL(req.url,'http://x');
   const p=url.pathname;
+
+  /* --- sảnh bài multiplayer (REST + SSE riêng) --- */
+  if(p.startsWith('/api/cards')){
+    try{
+      if(await Cards.handle(req,res,url)) return;
+    }catch(e){
+      log('CARD API ERROR:', e.message);
+      if(!res.headersSent) return json(res,500,{ok:false,error:'Lỗi sảnh bài!'});
+      return;
+    }
+  }
 
   /* --- SSE stream --- */
   if(p==='/api/stream'){

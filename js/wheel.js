@@ -236,6 +236,7 @@ const WHEEL_HTML=`
     </div>
   </div>`;
 function openWheel(){
+  if(typeof CardsUI !== 'undefined') CardsUI.closeAll(true);
   openModal('VÒNG QUAY MAY MẮN', WHEEL_HTML);
   Wheel.init(); Wheel.sync(); Wheel.renderLog();
   $('wheelSpin').onclick=()=>Wheel.spin();
