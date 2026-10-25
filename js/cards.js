@@ -501,7 +501,7 @@ const CardsUI = {
     this.renderCenter();
     this.renderActions(me);
     this.renderHand(me);
-    this.renderCombos(me);
+    this.markCombos(me);
     this.renderMe(me);
     this.renderLog();
   },
@@ -657,15 +657,13 @@ const CardsUI = {
     const canPass = myTurn && !!st.lastPlay;
     const selHint = sel
       ? `Đã chọn <b>${sel}</b> lá${combo ? ' · <b>' + crComboLabel(combo, selCards) + '</b>' : ' · chưa thành bộ'}${combo && !comboOk ? ' · <b>không đè được</b>' : ''}`
-      : 'Lượt của bạn — chọn bài hoặc bấm <b>GỢI Ý</b>.';
+      : 'Lượt của bạn — chọn bài rồi bấm <b>ĐÁNH BÀI</b>.';
     box.innerHTML = `
       <button class="cr-btn blue" id="crSort">SẮP BÀI</button>
-      <button class="cr-btn green" id="crSuggest" ${myTurn ? '' : 'disabled'}>💡 GỢI Ý</button>
       <button class="cr-btn gold" id="crPlay" ${canPlay ? '' : 'disabled'}>ĐÁNH BÀI${sel ? ' (' + sel + ')' : ''}</button>
       <button class="cr-btn ghost" id="crPass" ${canPass ? '' : 'disabled'}>BỎ LƯỢT</button>
       <span class="cr-hint">${myTurn ? selHint : 'Đang chờ <b>' + crEsc(st.turnName || 'người chơi') + '</b>…'}</span>`;
     this.bind('crSort', () => this.sortHand());
-    this.bind('crSuggest', () => this.hintPlay());
     this.bind('crPlay', () => this.act('play', { cards:[...this.selected] }));
     this.bind('crPass', () => this.act('pass'));
   },
@@ -728,99 +726,32 @@ const CardsUI = {
     }
   },
 
-  renderCombos(me){
-    let box = this.$('crCombos');
-    if(!box){
-      box = document.createElement('div');
-      box.id = 'crCombos';
-      box.className = 'cr-combos';
-      const hand = this.$('crHand');
-      if(hand && hand.parentNode) hand.parentNode.insertBefore(box, hand);
-    }
+  /* Đánh dấu (sáng đèn) các lá bài tạo thành combo khả thi: đôi, sánh, sám, tứ quý, ba đôi thông, bốn đôi thông.
+     Không còn hiển thị dải nút gợi ý riêng biệt — chỉ đổi viền lá bài thành màu vàng. */
+  markCombos(){
     const st = this.room;
     if(!st) return;
     const hall = st.hall;
     const pick = st.phase === 'playing' && this.myTurn() &&
       (hall === 'tienlen13' || hall === 'tienlen6' || hall === 'samloc');
+    const handBox = this.$('crHand');
+    if(!handBox) return;
     if(!pick || !st.hand || !st.hand.length){
-      box.style.display = 'none';
-      box.innerHTML = '';
-      box._sig = '';
+      handBox.querySelectorAll('.cr-card').forEach(el => el.classList.remove('cr-combo-match'));
       return;
     }
-    box.style.display = 'flex';
-
     const lastEval = st.lastPlay && st.lastPlay.seat !== st.mySeat ? st.lastPlay.eval : null;
-    const sig = st.hand.join(',') + '|' +
-      (lastEval ? lastEval.t + ':' + lastEval.len + ':' + lastEval.high : '0');
-    if(box._sig !== sig){
-      box._sig = sig;
-      let list = crFindCombos(st.hand, lastEval);
-      if(lastEval) list = list.slice(0, 8);
-      else list = list.filter(c => c.t !== 'single').slice(0, 10);
-
-      if(!list.length){
-        box.innerHTML = '<span class="cr-combos-lbl">GỢI Ý</span><span class="cr-combo-none">' +
-          (lastEval ? 'Không có bộ đỡ được — hãy bỏ lượt' : 'Không có bộ đặc biệt — bấm GỢI Ý để đánh lá nhỏ nhất') +
-          '</span>';
-      } else {
-        box.innerHTML = '<span class="cr-combos-lbl">GỢI Ý</span>' + list.map(c =>
-          `<button class="cr-combo" data-cards="${c.cards.join(',')}">${crEsc(crComboLabel(c))}</button>`
-        ).join('');
-        box.querySelectorAll('[data-cards]').forEach(el => {
-          el.onclick = () => this.selectCombo(el.dataset.cards.split(',').map(Number));
-        });
-      }
+    const combos = crFindCombos(st.hand || [], lastEval);
+    const matchCards = new Set();
+    const limit = lastEval ? 8 : 6;   /* khi phải đè, hiển thị nhiều bộ đè được hơn */
+    for(const combo of combos.slice(0, limit)){
+      for(const c of combo.cards) matchCards.add(c);
     }
-    this.paintComboActive();
-  },
-
-  paintComboActive(){
-    const box = this.$('crCombos');
-    if(!box) return;
-    const sel = [...this.selected].sort((a,b)=>a-b).join(',');
-    box.querySelectorAll('[data-cards]').forEach(el => {
-      const cs = el.dataset.cards.split(',').map(Number).sort((a,b)=>a-b).join(',');
-      el.classList.toggle('on', !!sel && cs === sel);
+    handBox.querySelectorAll('.cr-card').forEach(el => {
+      const c = +el.dataset.card;
+      if(matchCards.has(c)) el.classList.add('cr-combo-match');
+      else el.classList.remove('cr-combo-match');
     });
-  },
-
-  paintHandSelection(){
-    const box = this.$('crHand');
-    if(!box) return;
-    box.querySelectorAll('.cr-card').forEach(el => {
-      el.classList.toggle('sel', this.selected.has(+el.dataset.card));
-    });
-  },
-
-  selectCombo(cards){
-    if(!this.myTurn()) return;
-    const hand = (this.room && this.room.hand) || [];
-    this.selected = new Set((cards || []).filter(c => hand.includes(c)));
-    this.paintHandSelection();
-    this.paintComboActive();
-    this.renderActions(this.myPlayer());
-    if(typeof Sound !== 'undefined') Sound.click();
-  },
-
-  hintPlay(){
-    if(!this.myTurn()) return;
-    const st = this.room;
-    const lastEval = st.lastPlay && st.lastPlay.seat !== st.mySeat ? st.lastPlay.eval : null;
-    const all = crFindCombos(st.hand || [], lastEval);
-    let pick = null;
-    if(lastEval){
-      pick = all[0] || null;
-    } else {
-      const singles = all.filter(c => c.t === 'single').sort((a,b) => a.high - b.high);
-      pick = singles[0] || all[0] || null;
-    }
-    if(!pick){
-      const hint = this.$('crActions') && this.$('crActions').querySelector('.cr-hint');
-      if(hint) hint.innerHTML = '<b>Không có bộ đỡ được</b> — hãy bỏ lượt.';
-      return;
-    }
-    this.selectCombo(pick.cards);
   },
 
   renderMe(me){
@@ -854,7 +785,7 @@ const CardsUI = {
     if(on) this.selected.add(c);
     else this.selected.delete(c);
     if(el) el.classList.toggle('sel', on);   /* chỉ đổi lá được chọn — không render lại cả bộ bài */
-    this.paintComboActive();
+    this.markCombos();
     if(typeof Sound !== 'undefined') Sound.click();
     this.renderActions(this.myPlayer());
   },
@@ -863,6 +794,7 @@ const CardsUI = {
     this.handDesc = !this.handDesc;
     if(typeof Sound !== 'undefined') Sound.chip();
     this.renderHand(this.myPlayer());
+    this.markCombos();
   },
 
   /* ---------------- HÀNH ĐỘNG ---------------- */

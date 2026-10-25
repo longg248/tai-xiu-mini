@@ -418,6 +418,11 @@
   box-shadow: 0 16px 32px rgba(0,0,0,.8), 0 0 0 2px #ffd15c, 0 0 22px rgba(255,200,70,.7);
   filter: brightness(1.08);
 }
+/* Sáng đèn các lá tạo thành combo khả thi (đôi, sánh, sám, tứ quý, ba/bốn đôi thông) */
+.cr-card.cr-combo-match {
+  box-shadow: 0 0 0 2px #ffd15c, 0 0 18px rgba(255,200,70,.55);
+  filter: brightness(1.12);
+}
 .cr-card.small {
   --cr-card-w: clamp(46px, 4vw, 64px);
   width: var(--cr-card-w); height: auto;
@@ -674,6 +679,10 @@
     transform: translateY(-3px); z-index: auto;
     box-shadow: 0 0 0 3px #ffd15c, 0 8px 18px rgba(0,0,0,.7), 0 0 20px rgba(255,200,70,.55);
   }
+  .cr-card.cr-combo-match {
+    box-shadow: 0 0 0 2px #ffd15c, 0 8px 18px rgba(0,0,0,.7), 0 0 20px rgba(255,200,70,.55);
+    filter: brightness(1.12);
+  }
   .cr-card.pick:hover { transform: none; }
   .cr-hand-msg { padding: 16px 8px; font-size: 12px; }
 
@@ -719,6 +728,10 @@
   }
   .cr-hand .cr-card:first-child { margin-left: 0; }
   .cr-card.sel { transform: translateY(-18px); }
+  .cr-card.cr-combo-match {
+    box-shadow: 0 0 0 2px #ffd15c, 0 0 16px rgba(255,200,70,.55);
+    filter: brightness(1.12);
+  }
   .cr-info-row { padding: 4px 12px 0; }
   .cr-me { padding: 5px 9px; gap: 6px; }
   .cr-me .cr-av { width: 26px; height: 26px; font-size: 12px; }
