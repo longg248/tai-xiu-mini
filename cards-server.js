@@ -160,7 +160,20 @@ function createCards(deps){
       byToken.delete(token);
       this.note(`${p.name} rời bàn`);
       if(this.phase==='playing' && this.players.length){
-        if(this.turn === p.seat) this.advanceTurn(p.seat, true);
+        if(this.turn === p.seat){
+          /* Người rời bàn đang giữ lượt — chuyển lượt tự động */
+          if(this.hall.id === 'xidach'){
+            const next = this.nextXidachSeat(p.seat);
+            if(next == null){ this.housePlay(); }
+            else { this.turn = next; this.deadline = Date.now() + TURN_MS; this.broadcast(); }
+          } else if(this.hall.id === 'lieng'){
+            const next = this.nextLiengSeat(p.seat);
+            if(next == null){ this.showdownLieng(); }
+            else { this.turn = next; this.deadline = Date.now() + TURN_MS; this.broadcast(); }
+          } else {
+            this.advanceTurn(p.seat, true);
+          }
+        }
         if(this.players.length < 2) this.abort();
       }
       if(!this.players.length){
@@ -258,10 +271,18 @@ function createCards(deps){
     advanceTurn(fromSeat, skip){
       const n = this.hall.seats;
       let seat = fromSeat;
+      let found = false;
       for(let i=0; i<n; i++){
         seat = (seat+1) % n;
         const p = this.playerAt(seat);
-        if(p && !p.folded && !p.out && p.hand.length) { this.turn = seat; break; }
+        if(p && !p.folded && !p.out && p.hand.length) { this.turn = seat; found = true; break; }
+      }
+      /* Nếu không còn ai có thể chơi (người rời bàn hoặc hết bài), abort ván */
+      if(!found){
+        const alive = this.activePlayers().filter(x => x.hand.length);
+        if(alive.length === 1) { this.finish(alive[0]); return; }
+        if(alive.length === 0) { this.abort(); return; }
+        this.turn = alive[0].seat;
       }
       this.deadline = Date.now() + TURN_MS;
     }

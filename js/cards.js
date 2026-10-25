@@ -564,8 +564,10 @@ const CardsUI = {
       }
       return;
     }
-    const pick = this.myTurn() && (hall === 'tienlen13' || hall === 'tienlen6' || hall === 'samloc');
-    const sig = hall + '|' + hand.join(',');
+    const myTurn = this.myTurn();
+    const pick = myTurn && (hall === 'tienlen13' || hall === 'tienlen6' || hall === 'samloc');
+    /* Đưa trạng thái pick vào sig để cache không bỏ qua thay đổi lượt */
+    const sig = hall + '|' + hand.join(',') + '|' + (pick ? '1' : '0');
     /* Bộ bài không đổi (chỉ đổi lượt) → cập nhật class, không dựng lại ảnh */
     if(box._sig === sig && box.querySelector('.cr-card')){
       box.querySelectorAll('.cr-card').forEach(el => {

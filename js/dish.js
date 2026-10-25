@@ -35,7 +35,8 @@ const Dish={
     const ring=$('ring');
     if(ring) ring.classList.add('shaking');
 
-    Sound.shakeDice(durationMs);
+    /* Không phát tiếng xúc xắc khi đang ở sảnh/bàn bài */
+    if(!(typeof CardsUI !== 'undefined' && CardsUI.active)) Sound.shakeDice(durationMs);
     const hint=this.el.querySelector('.dish-hint');
     if(hint) hint.textContent='🎲 ĐANG XỐC ĐĨA…';
 

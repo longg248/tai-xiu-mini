@@ -120,3 +120,39 @@
   @keyframes fr { 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
   .flash-gold { position:absolute; inset:0; z-index:36; pointer-events:none; background:rgba(255,210,110,.18); opacity:0; }
   .flash-gold.on { animation:fr .8s; }
+
+/* =====================================================================
+   RESPONSIVE — TABLET & MOBILE cho bàn Tài Xỉu chính
+   ===================================================================== */
+
+/* -------- TABLET (≤ 1024px) -------- */
+@media (max-width: 1024px) {
+  .topnav { height: 30px; }
+  .topnav .t { font-size: 10px; }
+  .topnav .menu span { font-size: 9px; }
+  .bottomnav { top: auto; bottom: 0; }
+  .toast { font-size: 16px; padding: 10px 22px; }
+}
+
+/* -------- MOBILE (≤ 767px) -------- */
+@media (max-width: 767px) {
+  /* Ẩn poster hai bên để tận dụng toàn bộ chiều ngang */
+  .poster { display: none; }
+
+  .topnav { height: 28px; padding: 0 10px; gap: 8px; }
+  .topnav .t { font-size: 9px; letter-spacing: 1px; }
+  .topnav .menu { gap: 8px; }
+  .topnav .menu span { font-size: 8px; letter-spacing: 0.5px; }
+
+  /* Badge VIP nhỏ lại */
+  .badge { width: 52px; height: 52px; left: 10px; top: 36px; }
+  .badge::after { font-size: 18px; }
+
+  /* Toast thông báo */
+  .toast { font-size: 14px; padding: 8px 18px; border-radius: 10px; top: 280px; }
+  .toast.show { top: 290px; }
+
+  /* Menu dưới cùng */
+  .bottomnav { top: auto; bottom: 2px; gap: 6px; }
+  .bottomnav span { font-size: 10px; padding: 4px 12px; }
+}

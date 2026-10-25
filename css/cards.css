@@ -430,3 +430,119 @@
 
 /* Bố cục đã được scale theo stage 1600×900 — không dùng media query
    vì viewport thật có thể nhỏ hơn nhưng stage vẫn giữ tỉ lệ 16:9. */
+
+/* =====================================================================
+   RESPONSIVE — TABLET (max-width: 1024px) & MOBILE (max-width: 767px)
+   ===================================================================== */
+
+/* -------- TABLET (≤ 1024px) -------- */
+@media (max-width: 1024px) {
+  /* Hub: 2 cột sảnh thay vì 3 */
+  .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+  /* Panel phải thu nhỏ lại */
+  .ch-right { flex: 0 0 340px; }
+
+  /* Lá bài nhỏ hơn một chút */
+  .cr-card { width: 78px; height: 118px; margin-left: -24px; }
+  .cr-card.small { width: 52px; height: 79px; margin-left: -24px; }
+
+  /* Ghế đối thủ: giảm padding */
+  .cr-seat { width: 160px; padding: 7px 10px 7px; }
+
+  /* Bottom khu vực bài */
+  .cr-bottom { height: 250px; padding: 4px 18px 10px; }
+  .cr-hand { min-height: 148px; padding: 24px 12px 2px; }
+}
+
+/* -------- MOBILE (≤ 767px) -------- */
+@media (max-width: 767px) {
+  /* Hub: 1 cột, xếp dọc */
+  .cards-hub { flex-direction: column; }
+  .ch-top { height: 56px; padding: 0 16px; gap: 12px; }
+  .ch-brand { font-size: 20px; }
+  .ch-user span { font-size: 11px; max-width: 130px; }
+  .ch-user b { font-size: 14px; }
+
+  .ch-body { flex-direction: column; gap: 14px; padding: 14px 12px 16px; overflow-y: auto; }
+  .ch-left { flex: none; }
+  .ch-right { flex: none; min-height: 320px; }
+  .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ch-hall { min-height: 108px; padding: 12px 12px 10px; }
+  .ch-hall .ic { font-size: 26px; }
+  .ch-hall .nm { font-size: 13px; margin-top: 7px; }
+  .ch-hall .ds { font-size: 10px; }
+
+  .ch-stakes { gap: 6px; padding: 12px 14px 8px; }
+  .ch-stake { min-width: 60px; padding: 8px 2px; font-size: 11px; }
+  .ch-tables { padding: 4px 14px 10px; }
+  .ch-table-row { padding: 8px 10px; gap: 8px; }
+  .ch-table-row .no { font-size: 11px; min-width: 48px; }
+  .ch-quick { font-size: 13px; padding: 12px; }
+
+  /* Bàn chơi: thanh trên gọn lại */
+  .cr-top { height: 52px; padding: 0 14px; gap: 10px; }
+  .cr-title span { font-size: 16px; }
+  .cr-title b { font-size: 11px; }
+  .cr-title i { font-size: 9px; padding: 2px 6px; }
+  .cr-phase { padding: 5px 10px; font-size: 10px; gap: 6px; }
+
+  /* Sân cỏ */
+  .cr-felt { margin: 6px 10px 0; border-width: 5px; }
+
+  /* Ghế đối thủ nhỏ lại */
+  .cr-seat { width: 120px; padding: 6px 8px; gap: 2px; border-radius: 10px; }
+  .cr-av { width: 34px; height: 34px; font-size: 15px; }
+  .cr-nm { font-size: 11px; max-width: 106px; }
+  .cr-meta { font-size: 9px; }
+  .cr-tag { font-size: 7px; padding: 1px 5px; }
+  .cr-turn-dot { font-size: 7px; padding: 2px 7px; top: -9px; }
+
+  /* Vị trí ghế điều chỉnh cho màn nhỏ */
+  .pos-2-0 { left: 10px; top: 50%; transform: translateY(-50%); }
+  .pos-2-1 { right: 10px; top: 50%; transform: translateY(-50%); }
+  .pos-3-0 { left: 10px; top: 50%; transform: translateY(-50%); }
+  .pos-3-2 { right: 10px; top: 50%; transform: translateY(-50%); }
+  .pos-4-0 { left: 20px; bottom: 40px; }
+  .pos-4-1 { left: 20px; top: 28px; }
+  .pos-4-2 { right: 20px; top: 28px; }
+  .pos-4-3 { right: 20px; bottom: 40px; }
+  .pos-5-0 { left: 14px; bottom: 32px; }
+  .pos-5-1 { left: 14px; top: 22px; }
+  .pos-5-3 { right: 14px; top: 22px; }
+  .pos-5-4 { right: 14px; bottom: 32px; }
+
+  /* Bài giữa bàn */
+  .cr-center { width: 90%; }
+  .cr-center .big { font-size: 14px; padding: 6px 14px; }
+  .cr-center .sub { font-size: 11px; }
+
+  /* Khu vực bài và nút — dạng dọc */
+  .cr-bottom { height: auto; padding: 4px 10px 8px; gap: 8px; }
+  .cr-hand { min-height: 120px; padding: 20px 8px 2px; }
+  .cr-card { width: 62px; height: 94px; margin-left: -20px; }
+  .cr-card.small { width: 44px; height: 66px; margin-left: -20px; }
+  .cr-card.pick:hover { transform: translateY(-14px) scale(1.04); }
+  .cr-card.sel { transform: translateY(-26px) scale(1.05); }
+
+  /* Nút hành động lớn hơn, dễ bấm */
+  .cr-btn { padding: 14px 20px; font-size: 13px; border-radius: 10px; }
+  .cr-actions { gap: 8px; }
+  .cr-hint { font-size: 11px; text-align: center; width: 100%; }
+
+  /* Thông tin bản thân */
+  .cr-me { left: 10px; bottom: 8px; padding: 7px 12px 7px 8px; gap: 8px; max-width: 260px; }
+  .cr-me .cr-nm { font-size: 12px; }
+  .cr-me .cr-meta { font-size: 10px; }
+
+  /* Log sự kiện */
+  .cr-log { right: 10px; bottom: 10px; max-width: 200px; font-size: 10px; }
+
+  /* Hộp kết quả */
+  .cr-result-box { padding: 16px 14px 14px; }
+  .cr-res-title { font-size: 22px; }
+  .cr-res-row { flex-wrap: wrap; gap: 6px; }
+  .cr-res-row .who { min-width: 100px; font-size: 11px; }
+  .cr-res-actions { gap: 8px; }
+  .cr-btn.gold, .cr-btn.ghost { padding: 12px 18px; font-size: 13px; }
+}

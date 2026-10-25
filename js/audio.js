@@ -11,6 +11,12 @@ const Sound = {
   stopAll(){
     for(const o of this.nodes){ try{ o.stop(); }catch(e){} }
     this.nodes.length=0;
+    /* Đóng và tạo lại AudioContext để hủy toàn bộ oscillator đã lên lịch (scheduled)
+       — quan trọng khi chuyển từ Tài Xỉu sang sảnh bài hoặc ngược lại */
+    if(this.ctx){
+      try{ this.ctx.close(); }catch(e){}
+      this.ctx=null;
+    }
   },
   tone(f,dur=.09,type='sine',vol=.07,delay=0){
     if(!this.on || !this.ctx) return;
