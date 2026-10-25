@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/table.css">
 <link rel="stylesheet" href="css/wheel.css">
+<link rel="stylesheet" href="css/tienlen.css">
 <link rel="stylesheet" href="css/lobby.css">
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/responsive.css">
@@ -25,10 +26,10 @@
 <div id="stage">
 
   <!-- NỀN: poster + thẻ game (sinh bởi JS) -->
-  <div class="poster poster-left" data-game="bacca" style="cursor:pointer">
+  <div class="poster poster-left" data-game="tienlen" style="cursor:pointer">
     <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
-    <div class="ttl">BẮN CÁ</div>
-    <div class="sub">MINI GAME</div>
+    <div class="ttl">TIẾN LÊN</div>
+    <div class="sub">13 LÁ MINI</div>
   </div>
   <div class="poster poster-right">
     <div class="rc" data-game="nohu" style="cursor:pointer;background:linear-gradient(200deg,#7a1fa8,#2d0a4d 70%)">NỔ HŨ</div>
@@ -218,6 +219,84 @@
     <!-- thanh cược + số lớn -->
     <div class="bet-bar" id="betBar" title="Bấm để đặt lại mức cược về 0">0</div>
     <div class="big-num" id="bigNum">+3,960,000</div>
+  </div>
+
+  <!-- ===== MÀN HÌNH GAME: TIẾN LÊN MIỀN NAM 13 LÁ ===== -->
+  <div class="tienlen-screen" id="tienlenScreen">
+    <div class="tl-table">
+      <!-- Đầu trang -->
+      <div class="tl-header">
+        <div class="tl-logo">🃏 TIẾN LÊN <span>13 LÁ</span></div>
+        <div class="tl-room-info">BÀN 4 NGƯỜI · CƯỢC <b>50,000đ</b></div>
+        <div class="tl-header-actions">
+          <button class="tl-btn-exit" id="tlBtnExit">✕ RỜI BÀN</button>
+        </div>
+      </div>
+
+      <!-- Vị trí Bot trên (North) -->
+      <div class="tl-pos-top">
+        <div class="tl-player-box" id="tlPlayer2">
+          <div class="tl-avatar">T</div>
+          <div class="tl-info">
+            <div class="name">Tây Độc</div>
+            <div class="cards-count" id="tlBot2Count">13 lá</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vị trí Bot trái & phải (West & East) -->
+      <div class="tl-pos-left">
+        <div class="tl-player-box" id="tlPlayer1">
+          <div class="tl-avatar">B</div>
+          <div class="tl-info">
+            <div class="name">Bắc Kiếm</div>
+            <div class="cards-count" id="tlBot1Count">13 lá</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-pos-right">
+        <div class="tl-player-box" id="tlPlayer3">
+          <div class="tl-avatar">N</div>
+          <div class="tl-info">
+            <div class="name">Nam Thần</div>
+            <div class="cards-count" id="tlBot3Count">13 lá</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khu vực giữa bàn (Bài vừa đánh) -->
+      <div class="tl-center-zone">
+        <div class="tl-played-cards" id="tlPlayedCards"></div>
+        <div class="tl-last-action" id="tlLastAction">Đang chờ ván mới…</div>
+      </div>
+
+      <!-- Khu vực Người chơi (South) -->
+      <div class="tl-pos-bottom">
+        <div class="tl-my-actions">
+          <button class="tl-btn-act tl-btn-sort" id="tlBtnSort">SẮP BÀI</button>
+          <button class="tl-btn-act tl-btn-play" id="tlBtnPlay" disabled>ĐÁNH BÀI</button>
+          <button class="tl-btn-act tl-btn-pass" id="tlBtnPass" disabled>BỎ LƯỢT</button>
+        </div>
+        <div class="tl-hand" id="tlMyHand"></div>
+        <div class="tl-player-box" id="tlPlayer0" style="margin-top:-6px">
+          <div class="tl-avatar" style="border-color:#00e5ff">B</div>
+          <div class="tl-info">
+            <div class="name">Bạn (Người chơi)</div>
+            <div class="bal">Số dư: <b id="tlMyBal">0</b>đ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal kết thúc ván -->
+    <div class="tl-end-modal" id="tlEndModal">
+      <div class="tl-end-box">
+        <div class="tl-end-title" id="tlEndTitle">🎉 CHIẾN THẮNG!</div>
+        <div class="tl-end-desc" id="tlEndDesc"></div>
+        <button class="tl-end-btn" id="tlEndBtn">CHƠI TIẾP VÁN MỚI</button>
+      </div>
+    </div>
   </div>
 
   <!-- ===== PANEL LỊCH SỬ ĐÈ LÊN BÀN ===== -->
@@ -413,6 +492,7 @@
 <script src="js/game.js"></script>
 <script src="js/net.js"></script>
 <script src="js/wheel.js"></script>
+<script src="js/tienlen.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

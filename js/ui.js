@@ -842,14 +842,15 @@ function openShare(){
 function openHome(){ $('homeScreen').classList.add('open'); renderHome(); Sound.click(); }
 function closeHome(){ $('homeScreen').classList.remove('open'); }
 const LOBBY_GAMES=[
-  {id:'taixiu', icon:'🎲', name:'TÀI XỈU',  cat:'mini', live:true,  bg:'linear-gradient(160deg,#3d1a52,#140a20)'},
-  {id:'wheel',  icon:'🎯', name:'VÒNG QUAY',cat:'mini', live:true,  bg:'linear-gradient(160deg,#7a1fa8,#2d0a4d)'},
-  {id:'xocxoc', icon:'🥮', name:'XÓC XÓC',  cat:'mini', live:false, bg:'linear-gradient(160deg,#b3123f,#3d0512)'},
-  {id:'nohu',   icon:'💎', name:'NỔ HŨ',    cat:'slot', live:false, bg:'linear-gradient(160deg,#0d3b8f,#071a3d)', jp:12048135},
-  {id:'rongho', icon:'🐉', name:'RỒNG HỔ',  cat:'bai',  live:false, bg:'linear-gradient(160deg,#8f0d2c,#2d0510)'},
-  {id:'poke',   icon:'♠️', name:'POKER',    cat:'bai',  live:false, bg:'linear-gradient(160deg,#0d6b8f,#04202d)'},
-  {id:'bacca',  icon:'🐟', name:'BẮN CÁ',   cat:'mini', live:false, bg:'linear-gradient(160deg,#0d8f6b,#03291e)'},
-  {id:'sicbo',  icon:'🀄', name:'SICBO',    cat:'mini', live:false, bg:'linear-gradient(160deg,#c87a1f,#4d2a0a)', jp:4392400}
+  {id:'taixiu',  icon:'🎲', name:'TÀI XỈU',   cat:'mini', live:true,  bg:'linear-gradient(160deg,#3d1a52,#140a20)'},
+  {id:'tienlen', icon:'🃏', name:'TIẾN LÊN',  cat:'bai',  live:true,  bg:'linear-gradient(160deg,#175e34,#061d10)'},
+  {id:'wheel',   icon:'🎯', name:'VÒNG QUAY', cat:'mini', live:true,  bg:'linear-gradient(160deg,#7a1fa8,#2d0a4d)'},
+  {id:'xocxoc',  icon:'🥮', name:'XÓC XÓC',   cat:'mini', live:false, bg:'linear-gradient(160deg,#b3123f,#3d0512)'},
+  {id:'nohu',    icon:'💎', name:'NỔ HŨ',     cat:'slot', live:false, bg:'linear-gradient(160deg,#0d3b8f,#071a3d)', jp:12048135},
+  {id:'rongho',  icon:'🐉', name:'RỒNG HỔ',   cat:'bai',  live:false, bg:'linear-gradient(160deg,#8f0d2c,#2d0510)'},
+  {id:'poke',    icon:'♠️', name:'POKER',     cat:'bai',  live:false, bg:'linear-gradient(160deg,#0d6b8f,#04202d)'},
+  {id:'bacca',   icon:'🐟', name:'BẮN CÁ',    cat:'mini', live:false, bg:'linear-gradient(160deg,#0d8f6b,#03291e)'},
+  {id:'sicbo',   icon:'🀄', name:'SICBO',     cat:'mini', live:false, bg:'linear-gradient(160deg,#c87a1f,#4d2a0a)', jp:4392400}
 ];
 let lobCat='all';
 function renderHome(){
@@ -882,6 +883,7 @@ function renderHome(){
     const id=t.dataset.lob; Sound.click();
     if(id==='taixiu'){ closeHome(); toast('Vào bàn #934042 — ván #'+Net.roundId); return; }
     if(id==='wheel'){ closeHome(); openWheel(); return; }
+    if(id==='tienlen'){ closeHome(); TienLen.startNewGame(); return; }
     closeHome(); openLobby(id);
   });
   /* --- bảng xếp hạng từ server --- */
@@ -1020,6 +1022,7 @@ document.querySelectorAll('[data-nav]').forEach(el=>el.onclick=()=>handleNav(el.
 document.querySelectorAll('[data-game]').forEach(el=>el.onclick=()=>{
   const id=el.dataset.game;
   if(id==='wheel'){ openWheel(); return; }
+  if(id==='tienlen'){ closeHome(); TienLen.startNewGame(); return; }
   if(id==='taixiu'){ toast('Bạn đang chơi Tài Xỉu — phòng #934042'); return; }
   openLobby(id);
 });

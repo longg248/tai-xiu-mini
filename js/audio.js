@@ -39,7 +39,9 @@ const Sound = {
     }
   },
   win(){ [523,659,784,1046].forEach((f,i)=>this.tone(f,.22,'triangle',.08,i*.085)); },
-  lose(){ [392,330,247,165].forEach((f,i)=>this.tone(f,.26,'sawtooth',.05,i*.11)); }
+  lose(){ [392,330,247,165].forEach((f,i)=>this.tone(f,.26,'sawtooth',.05,i*.11)); },
+  playCard(){ this.tone(550,.06,'triangle',.06); this.tone(900,.04,'sine',.04,.02); },
+  passTurn(){ this.tone(280,.08,'sine',.05); }
 };
 document.addEventListener('pointerdown', ()=>Sound.init(), {once:true});
 
