@@ -288,9 +288,12 @@ function settle(fair, info){
       toast(`${isTai?'TÀI':'XỈU'} • ${sum} điểm — ván #${fair.nonce}`, 2200, true);
     }
     if(typeof Net.meBal==='number') state.balance=Net.meBal;   /* server là trọng tài */
-    state.history.unshift({sum, result:isTai?'T':'X',
-      pick:info.hadBet?(info.myPick==='tai'?'T':'X'):'', won, bet,
-      roundId:fair.nonce, fair});
+    /* chỉ ghi lịch sử các ván ĐÃ cược; ván không cược không để lại vết trong lịch sử */
+    if(info.hadBet){
+      state.history.unshift({sum, result:isTai?'T':'X',
+        pick:info.myPick==='tai'?'T':'X', won, bet, hadBet:true,
+        roundId:fair.nonce, fair});
+    }
     state.history = state.history.slice(0,40);
     refresh(); saveGame(); refreshDrawer();
     if($('histOverlay').classList.contains('open')) renderHist();

@@ -274,8 +274,8 @@ function renderHist(){
       <span>#${state.history.length-i}</span>
       <span class="tag ${h.result==='T'?'t':'x'}">${h.result}</span>
       <span>${h.sum} đ</span>
-      <span>Cược ${h.pick==='T'?'TÀI':'XỈU'} · ${fmtDot(h.bet)}</span>
-      <span class="${h.won?'res-ok':'res-no'}">${h.won?'THẮNG':'THUA'}</span>
+      ${h.hadBet ? `<span>Cược ${h.pick==='T'?'TÀI':'XỈU'} · ${fmtDot(h.bet)}</span>
+      <span class="${h.won?'res-ok':'res-no'}">${h.won?'THẮNG':'THUA'}</span>` : '<span class="res-no">—</span>'}
     </div>`).join('')
     : '<div style="padding:22px;text-align:center;color:#8a7a58">Chưa có ván nào — đặt cược để xem lịch sử!</div>';
 }
@@ -333,8 +333,8 @@ function refreshDrawer(){
         <span>#${state.history.length-i}</span>
         <span class="tag ${h.result==='T'?'t':'x'}">${h.result}</span>
         <span>${h.sum} đ</span>
-        <span>Cược ${h.pick==='T'?'TÀI':'XỈU'} · ${fmtDot(h.bet)}</span>
-        <span class="${h.won?'res-ok':'res-no'}">${h.won?'THẮNG':'THUA'}</span>
+        ${h.hadBet ? `<span>Cược ${h.pick==='T'?'TÀI':'XỈU'} · ${fmtDot(h.bet)}</span>
+        <span class="${h.won?'res-ok':'res-no'}">${h.won?'THẮNG':'THUA'}</span>` : '<span class="res-no">—</span>'}
       </div>`).join('')
       : '<div style="padding:24px;text-align:center;color:#8a7a58">Chưa có ván nào.<br>Hãy đặt cược để xem lịch sử!</div>'}`;
 
