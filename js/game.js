@@ -11,8 +11,7 @@ function saveKeyFor(u){ return (!u||u.key==='guest') ? 'taixiu_save_v1' : 'taixi
 
 /* ===== trạng thái =====*/
 const state = { balance:3960000, bet:0, side:null, rolling:false, poolTai:741648460, poolXiu:741648460, history:[],
-                promo:{ lastDaily:'', missions:0, cashback:0, notify:{} },
-                chat:[] };
+                promo:{ lastDaily:'', missions:0, cashback:0, notify:{} } };
 
 const $ = id => document.getElementById(id);
 const els = {
@@ -23,13 +22,11 @@ const els = {
   btnTai:$('btnTai'), btnXiu:$('btnXiu'),
   btnBet:$('btnBet'), btnCancel:$('btnCancel'), btnAllIn:$('btnAllIn'),
   chips:[...document.querySelectorAll('.chip')],
-  ring:$('ring'), toast:$('toast'),
-  roadDots:$('roadDots')
+  ring:$('ring'), toast:$('toast')
 };
 
 const fmtDot   = n => n.toLocaleString('vi-VN');  /* 741.648.460 */
 const fmtComma = n => n.toLocaleString('en-US');  /* 2,000,000   */
-function crEsc(x){ return String(x==null?'':x).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 /* ===== vẽ mặt xúc xắc =====*/
 const PIPS = {
@@ -301,21 +298,13 @@ function settle(fair, info){
         roundId:fair.nonce, fair});
     }
     state.history = state.history.slice(0,40);
-    refresh(); saveGame(); refreshDrawer(); renderRoadmap();
+    refresh(); saveGame(); refreshDrawer();
     if($('histOverlay').classList.contains('open')) renderHist();
     if(state._resolve){ const r=state._resolve; state._resolve=null; r(won); }
   }, 550);
 }
 
 
-
-/* ===== SOI CẦU: render chấm đen (TÀI) / trắng (XỈU) từ lịch sử ===== */
-function renderRoadmap(){
-  const box=els.roadDots; if(!box) return;
-  const list=(state.history||[]).slice(0,40);
-  box.innerHTML=list.map(h=>`<div class="road-dot ${h.result==='T'?'t':'x'}" title="${h.result==='T'?'TÀI':'XỈU'} ${h.sum}"></div>`).join('');
-}
-function refreshRoadmap(){ renderRoadmap(); }
 
 /* ---------- CƯỢC TỰ ĐỘNG ---------- */
 const auto={ active:false, total:10, done:0, pick:'tai' };
@@ -361,32 +350,4 @@ async function startAuto(){
   if(auto.total && auto.done>=auto.total) toast('Hoàn thành '+auto.done+' ván AUTO!');
 }
 
-/* ===== BẢNG CHAT (DEMO: lưu localStorage) ===== */
-function renderChat(){
-  const box=$('chatBody'); if(!box) return;
-  const msgs=(state.chat||[]).slice(-30);
-  box.innerHTML=msgs.map(function(m){
-    var me=m.me?' chat-msg.me':'';
-    var t=new Date(m.time||0).toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
-    return '<div class="chat-msg'+me+'"><div class="who">'+crEsc(m.name||'Bạn')+' <span style="opacity:.6;font-size:9px">'+t+'</span></div>'+crEsc(m.text)+'</div>';
-  }).join('');
-  box.scrollTop=box.scrollHeight;
-}
-function addChat(text,name,me){
-  if(!text||!text.trim()) return;
-  state.chat=state.chat||[];
-  state.chat.unshift({text:text.trim(),name:name||'Bạn',me:!!me,time:Date.now()});
-  state.chat=state.chat.slice(0,50);
-  saveGame(); renderChat();
-}
-function initChat(){
-  var inn=$('chatIn'); var snd=$('chatSend');
-  if(!inn||!snd) return;
-  var saved=localStorage.getItem('tx_chat');
-  if(saved){ try{ state.chat=JSON.parse(saved); }catch(e){} }
-  renderChat();
-  snd.onclick=function(){ addChat(inn.value); inn.value=''; if(typeof Sound!=='undefined') Sound.click(); };
-  inn.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); snd.click(); } };
-}
-initChat();
 
