@@ -228,15 +228,18 @@ async function revealFair(fair, info){
     els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('reveal'); });
   };
 
-  /* Xốc đĩa sinh động kèm âm thanh va đập xúc xắc ruby trước khi cho người chơi nặn */
-  await new Promise(res => Dish.shake(1800, res));
-  await sleep(200);
+  /* Xốc đĩa: nếu chưa đang xóc (ví dụ kết nối trễ) thì xóc ngắn 500ms.
+     Nếu đã xóc từ giai đoạn chốt cược (applyTick) thì bỏ qua để không trễ hai lần. */
+  if(!Dish.shaking){
+    await new Promise(res => Dish.shake(500, res));
+  }
+  await sleep(150);
 
   await new Promise(res=>{
     Dish.onOpen=res;
     if(Dish.opened){ Dish.onOpen=null; res(); }
-    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 1200);   /* không cược → tự mở */
-    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 800);     /* AUTO tự mở */
+    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 300);   /* không cược → tự mở nhanh */
+    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 200);     /* AUTO tự mở nhanh */
   });
   await sleep(620);                                 /* chờ animation dĩa bay */
   for(let i=0;i<3;i++) if(!Dish.peeked[i]) Dish.peekAt(i);  /* đảm bảo đủ 3 số */

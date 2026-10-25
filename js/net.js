@@ -86,7 +86,7 @@ const Net={
        (bỏ qua khi đang ở sảnh/bàn bài để không nghe tiếng xúc xắc) */
     const inCards = (typeof CardsUI !== 'undefined' && !!CardsUI.active);
     if(!inCards && oldPhase==='betting' && t.phase==='locked' && !Dish.opened && !Dish.shaking){
-      Dish.shake(Math.min(3000, Math.max(1600, this.msLeft - 400)));
+      Dish.shake(Math.min(800, Math.max(400, this.msLeft - 400)));
     }
 
     const bar=$('roundBar');
@@ -137,16 +137,16 @@ const Net={
       if(!this.online) return;
       const sig=this.phase+'|'+this.left+'|'+this.roundId;
       if(sig===this._lastSig){
-        this._stale+=3;
-        if(this._stale>=9){
+        this._stale+=1;
+        if(this._stale>=3){
           this._stale=0;
           this.connect();
           this.sync();
         }
       } else { this._stale=0; this._lastSig=sig; }
-    },3000);
-    /* polling fallback moi 5s */
-    this._poll=setInterval(()=>{ if(this.online) this.sync(); },5000);
+    },1000);
+    /* polling fallback mỗi 1s để phát hiện kết quả nhanh khi SSE bị chặn */
+    this._poll=setInterval(()=>{ if(this.online) this.sync(); },1000);
   }
 };
 /* cộng/trừ số dư qua server (wheel, khuyến mãi, VIP) — offline thì trừ local */
