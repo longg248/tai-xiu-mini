@@ -310,6 +310,14 @@
 .cr-center .sub b { color: #ffd166; }
 /* lá bài trên bàn: không bị bóp méo khi sân thấp */
 .cr-play-cards { display: flex; justify-content: center; align-items: center; min-height: 86px; padding: 4px 10px; flex-shrink: 0; }
+/* lá bài trên bàn: hiển thị kế nhau, KHÔNG bị margin-left âm của cr-card che lấp */
+.cr-play-cards .cr-card {
+  margin-left: 0 !important;
+  margin-right: 6px;
+  transform: none !important;
+  z-index: auto !important;
+}
+.cr-play-cards .cr-card:last-child { margin-right: 0; }
 .cr-pot {
   font-size: 15px; font-weight: 900; color: #ffdf7e;
   background: linear-gradient(180deg, rgba(80,50,10,.7), rgba(30,18,4,.8));
@@ -717,10 +725,10 @@
   .cr-me .cr-nm { font-size: 10px; }
   .cr-me .cr-meta { font-size: 9px; }
   .cr-log { display: none; }
-  .cr-center { width: 60%; min-height: 0; }
+  .cr-center { width: 70%; min-height: 0; }
   .cr-center .big { font-size: 14px; padding: 5px 14px; }
   .cr-center .sub { font-size: 10px; }
-  .cr-center .cr-play-cards { min-height: 0; padding: 2px; }
+  .cr-center .cr-play-cards { min-height: 64px; padding: 4px 0; }
 }
 
 @media (max-width: 1024px) and (orientation: landscape) and (max-height: 560px) {
