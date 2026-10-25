@@ -72,6 +72,7 @@ const Net={
     if($('histOverlay').classList.contains('open')) renderHist();
   },
   applyTick(t){
+    const oldPhase = this.phase;
     if(t.durs) this.durs=t.durs;
     this.phase=t.phase; this.roundId=t.roundId; this.players=t.players||0;
     /* mốc nội suy: server gửi msLeft chính xác, client tự vẽ mượt mỗi 100ms */
@@ -80,6 +81,12 @@ const Net={
     this._tickAt = performance.now();
     if(t.pools){ state.poolTai=t.pools.tai; state.poolXiu=t.pools.xiu; }
     state.rolling = t.phase!=='betting';      /* chốt cược + kết quả = khóa bàn */
+
+    /* Chuyển sang phase locked (Chốt cược) → kích hoạt ngay animation xốc đĩa */
+    if(oldPhase==='betting' && t.phase==='locked' && !Dish.opened && !Dish.shaking){
+      Dish.shake(Math.min(3000, Math.max(1600, this.msLeft - 400)));
+    }
+
     const bar=$('roundBar');
     if(bar){
       bar.dataset.phase=t.phase;

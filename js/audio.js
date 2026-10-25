@@ -26,6 +26,18 @@ const Sound = {
   flip(){ this.tone(430,.05,'square',.05); this.tone(760,.04,'triangle',.03,.03); },  /* tiếng lật xúc xắc */
   thud(){ this.tone(110,.14,'sine',.1); this.tone(70,.18,'triangle',.07,.03); },      /* tiếng chén úp lại */
   dice(){ for(let i=0;i<16;i++) this.tone(110+Math.random()*260,.028,'square',.035,i*.055); },
+  shakeDice(dur=2200){
+    if(!this.on) return;
+    this.init();
+    const count = Math.floor(dur / 65);
+    for(let i=0; i<count; i++){
+      const delay = (i * 0.065) + (Math.random() * 0.015);
+      const freq = 130 + Math.random() * 320;
+      const vol = 0.045 + Math.random() * 0.045;
+      const type = Math.random() > 0.5 ? 'triangle' : 'square';
+      this.tone(freq, 0.038, type, vol, delay);
+    }
+  },
   win(){ [523,659,784,1046].forEach((f,i)=>this.tone(f,.22,'triangle',.08,i*.085)); },
   lose(){ [392,330,247,165].forEach((f,i)=>this.tone(f,.26,'sawtooth',.05,i*.11)); }
 };

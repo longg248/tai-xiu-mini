@@ -206,22 +206,25 @@ function onRoundResult(d){
 }
 async function revealFair(fair, info){
   els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('pop','reveal'); });
-  Dish.cover();
-  Dish.onPeek=i=>{                                  /* viên thứ i lộ chấm khi kéo đủ */
+  
+  Dish.onPeek=i=>{                                  /* viên thứ i lộ chấm khi kéo lòi viên đó */
     renderDie(els.d[i], fair.dice[i]);
     els.d[i].classList.add('reveal');
     Sound.flip();
   };
-  Dish.onUnpeek=()=>{                               /* thả tay → úp lại, chấm ẩn hết */
+  Dish.onUnpeek=()=>{                               /* thả tay về tâm → úp lại, che chấm */
     els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('reveal'); });
   };
-  Sound.cover();
-  await sleep(700);
+
+  /* Xốc đĩa sinh động kèm âm thanh va đập xúc xắc ruby trước khi cho người chơi nặn */
+  await new Promise(res => Dish.shake(1800, res));
+  await sleep(200);
+
   await new Promise(res=>{
     Dish.onOpen=res;
     if(Dish.opened){ Dish.onOpen=null; res(); }
-    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 900);   /* không cược → tự mở nhanh */
-    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 700);    /* AUTO tự mở */
+    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 1200);   /* không cược → tự mở */
+    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 800);     /* AUTO tự mở */
   });
   await sleep(620);                                 /* chờ animation dĩa bay */
   for(let i=0;i<3;i++) if(!Dish.peeked[i]) Dish.peekAt(i);  /* đảm bảo đủ 3 số */

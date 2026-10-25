@@ -1,11 +1,23 @@
 /* =====================================================================
-   BÁT / ĐĨA ÚP — CƠ CHẾ KÉO MỞ ĐĨA & HÉ LỘ TỪNG XÚC XẮC
+   BÁT / ĐĨA ÚP — CƠ CHẾ KÉO MỞ ĐĨA & HÉ LỘ TỪNG XÚC XẮC THEO HƯỚNG KÉO
    ===================================================================== */
-/* ===== CHÉN / ĐĨA ÚP — GIỮ CHUỘT KÉO: KÉO TỚI ĐÂU SỐ LỘ TỚI ĐÓ ===== */
 const Dish={
   el:null, dragging:false, sx:0, sy:0, dx:0, dy:0,
-  busy:false, opened:false, onOpen:null, onPeek:null, onUnpeek:null,
-  THRESHOLD:135, lift:0, peeked:[false,false,false],
+  busy:false, opened:false, shaking:false,
+  onOpen:null, onPeek:null, onUnpeek:null,
+  THRESHOLD:130, lift:0, peeked:[false,false,false],
+
+  /* Tọa độ tâm 3 viên xúc xắc so với tâm đĩa úp (đường kính 300px):
+     - Viên 0 (d1): Nằm trên đỉnh (Top)
+     - Viên 1 (d2): Nằm dưới bên trái (Bottom-Left)
+     - Viên 2 (d3): Nằm dưới bên phải (Bottom-Right) */
+  dicePos:[
+    { x:0,   y:-92 },
+    { x:-80, y:42 },
+    { x:74,  y:42 }
+  ],
+  REVEAL_DIST:114, /* Khoảng cách mép bát rời khỏi để viên xúc xắc lộ ra */
+
   init(){
     this.el=$('dishCover');
     this.el.addEventListener('pointerdown',e=>this.start(e));
@@ -14,20 +26,47 @@ const Dish={
     this.el.addEventListener('pointercancel',e=>this.end(e));
     this.el.addEventListener('lostpointercapture',()=>{ if(this.dragging) this.end(); });
   },
+
+  /* Animation XỐC ĐĨA chân thật */
+  shake(durationMs=2400, onDone){
+    this.cover();
+    this.shaking=true;
+    this.el.classList.add('shaking');
+    const ring=$('ring');
+    if(ring) ring.classList.add('shaking');
+
+    Sound.shakeDice(durationMs);
+    const hint=this.el.querySelector('.dish-hint');
+    if(hint) hint.textContent='🎲 ĐANG XỐC ĐĨA…';
+
+    setTimeout(()=>{
+      this.shaking=false;
+      this.el.classList.remove('shaking');
+      if(ring) ring.classList.remove('shaking');
+      Sound.thud();
+      if(hint) hint.textContent='🖱 Giữ & KÉO dĩa theo hướng bạn muốn để nặn!';
+      if(onDone) onDone();
+    }, durationMs);
+  },
+
   cover(){
     this.dx=this.dy=0; this.lift=0; this.opened=false; this.onOpen=null;
     this.peeked=[false,false,false];
-    this.el.classList.remove('show','dropping','flying','dragging');
+    this.el.classList.remove('show','dropping','flying','dragging','shaking');
+    const ring=$('ring');
+    if(ring) ring.classList.remove('shaking');
+
     void this.el.offsetWidth;
     this.el.style.transform=''; this.el.style.opacity='';
     this.el.style.setProperty('--lift',0);
     this.setProgress(0);
     this.el.classList.add('show','dropping');
-    setTimeout(()=>this.el.classList.remove('dropping'), 700);  /* rơi xong → gỡ keyframes */
+    setTimeout(()=>this.el.classList.remove('dropping'), 600);
     this.busy=true;
   },
+
   start(e){
-    if(!this.busy) return;
+    if(!this.busy || this.shaking) return;
     e.preventDefault();
     this.dragging=true;
     this.sx=e.clientX; this.sy=e.clientY;
@@ -35,41 +74,69 @@ const Dish={
     try{ this.el.setPointerCapture(e.pointerId); }catch(err){}
     Sound.chip();
   },
+
   move(e){
-    if(!this.dragging) return;
-    this.dx=e.clientX-this.sx; this.dy=e.clientY-this.sy;
-    this.lift=Math.min(1,Math.hypot(this.dx,this.dy)/this.THRESHOLD);
+    if(!this.dragging || this.shaking) return;
+    this.dx=e.clientX-this.sx;
+    this.dy=e.clientY-this.sy;
+    const distHypot=Math.hypot(this.dx,this.dy);
+    this.lift=Math.min(1,distHypot/this.THRESHOLD);
     const rot=Math.max(-22,Math.min(22,this.dx*0.05));
-    this.el.style.transform=`translate(${this.dx}px,${this.dy}px) rotate(${rot}deg) scale(${1+this.lift*.08})`;
+
+    this.el.style.transform=`translate(${this.dx}px,${this.dy}px) rotate(${rot}deg) scale(${1+this.lift*0.07})`;
     this.el.style.setProperty('--lift',this.lift.toFixed(3));
     this.setProgress(this.lift);
-    this.updatePeeks();
+
+    /* CƠ CHẾ NẶN THEO HƯỚNG: Kiểm tra viên nào bị lòi ra theo vị trí kéo */
+    this.updatePeeksDirectional();
   },
-  updatePeeks(){
-    const th=[.30,.60,.90];            /* viên 1 → 2 → 3 lần lượt lộ chấm */
-    for(let i=0;i<3;i++) if(!this.peeked[i] && this.lift>=th[i]) this.peekAt(i);
+
+  /* Kiểm tra viên nào bị lòi ra ngoài mép bát dựa trên vector kéo (dx, dy) */
+  updatePeeksDirectional(){
+    for(let i=0; i<3; i++){
+      if(this.peeked[i]) continue;
+      // Khoảng cách từ tâm bát hiện tại (dx, dy) đến tâm viên thứ i
+      const distFromBowl=Math.hypot(this.dicePos[i].x - this.dx, this.dicePos[i].y - this.dy);
+      // Nếu mép bát đã trượt qua vị trí của viên xúc xắc i:
+      if(distFromBowl>=this.REVEAL_DIST){
+        this.peekAt(i);
+      }
+    }
   },
+
   peekAt(i){
     this.peeked[i]=true;
     if(this.onPeek) this.onPeek(i);
   },
+
   setProgress(p){
     const f=this.el.querySelector('.dish-progress-fill');
     if(f) f.style.width=(p*100).toFixed(1)+'%';
     const h=this.el.querySelector('.dish-hint');
-    if(h) h.textContent = this.dragging
-      ? `Đang lật số… ${Math.round(p*100)}%`
-      : '🖱 Giữ và KÉO dĩa để lật số';
+    if(h){
+      const count=this.peeked.filter(Boolean).length;
+      if(this.dragging){
+        h.textContent=count===0
+          ? `Đang kéo nặn… (chưa lòi viên nào)`
+          : count<3
+            ? `🔥 Đã lòi ${count}/3 viên xúc xắc!`
+            : `🎯 Đã lòi cả 3 viên! Thả tay để mở`;
+      } else {
+        h.textContent='🖱 Giữ & KÉO dĩa theo hướng bạn muốn để nặn!';
+      }
+    }
   },
+
   end(){
     if(!this.dragging) return;
     this.dragging=false;
     this.el.classList.remove('dragging');
     this.setProgress(this.lift);
-    if(this.lift>=1) this.fly();
+    if(this.lift>=0.95 || this.peeked.every(Boolean)) this.fly();
     else this.snapBack();
   },
-  snapBack(){                       /* thả tay giữa chừng → chén úp lại, số biến mất */
+
+  snapBack(){
     this.el.style.transform=''; this.el.style.opacity='';
     this.el.style.setProperty('--lift',0);
     this.setProgress(0);
@@ -78,32 +145,42 @@ const Dish={
     if(this.onUnpeek) this.onUnpeek();
     Sound.thud();
   },
-  fly(){                            /* kéo đủ → chén nhấc hẳn, chốt kết quả */
+
+  fly(){
     if(!this.busy) return;
     this.busy=false; this.opened=true;
-    const ang=Math.atan2(this.dy||0.01,this.dx||0.01);
-    this.el.style.setProperty('--fly-x',Math.cos(ang)*560+'px');
-    this.el.style.setProperty('--fly-y',Math.sin(ang)*560+'px');
-    this.el.classList.remove('dropping');
+    const ang=Math.atan2(this.dy||-0.2, this.dx||0.1);
+    this.el.style.setProperty('--fly-x',Math.cos(ang)*580+'px');
+    this.el.style.setProperty('--fly-y',Math.sin(ang)*580+'px');
+    this.el.classList.remove('dropping','shaking');
     this.el.classList.add('flying');
     Sound.swoosh();
     setTimeout(()=>{
-      this.el.classList.remove('show','flying','dragging');
+      this.el.classList.remove('show','flying','dragging','shaking');
       this.el.style.transform=''; this.el.style.opacity='';
       this.el.style.setProperty('--lift',0);
-    },700);
+    }, 700);
     if(this.onOpen){ const f=this.onOpen; this.onOpen=null; f(); }
   },
-  autoReveal(){                     /* chế độ AUTO: tự kéo dần rồi nhấc chén */
-    if(!this.busy) return;
-    [[.34,0],[.62,380],[.9,760],[1,1150]].forEach(([lv,ms])=>setTimeout(()=>{
+
+  autoReveal(){
+    if(!this.busy || this.shaking) return;
+    /* Tự động kéo nặn xéo xuống trái để lộ dần từng viên */
+    const steps=[
+      { dx:0,   dy:45,  ms:0 },
+      { dx:-45, dy:75,  ms:450 },
+      { dx:-90, dy:110, ms:900 },
+      { dx:-140,dy:140, ms:1350 }
+    ];
+    steps.forEach(({dx,dy,ms},idx)=>setTimeout(()=>{
       if(!this.busy || this.dragging || this.opened) return;
-      this.lift=lv;
-      this.el.style.transform=`translate(0,${(-lv*26).toFixed(1)}px) scale(${(1+lv*.08).toFixed(3)})`;
-      this.el.style.setProperty('--lift',lv);
-      this.setProgress(lv);
-      this.updatePeeks();
-      if(lv>=1) this.fly();
+      this.dx=dx; this.dy=dy;
+      this.lift=Math.min(1,Math.hypot(dx,dy)/this.THRESHOLD);
+      this.el.style.transform=`translate(${dx}px,${dy}px) scale(${1+this.lift*0.07})`;
+      this.el.style.setProperty('--lift',this.lift);
+      this.setProgress(this.lift);
+      this.updatePeeksDirectional();
+      if(idx===steps.length-1) this.fly();
     },ms));
   }
 };

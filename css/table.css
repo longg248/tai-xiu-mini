@@ -358,6 +358,24 @@
     70%  { transform:translateY(10px) scale(1.04); opacity:1; }
     100% { transform:translateY(0) scale(1); }
   }
+
+  /* ===== HIỆU ỨNG XỐC ĐĨA (ANIMATION RUNG LẮC BÁT ĐĨA CHÂN THẬT) ===== */
+  .dish-cover.shaking, .circle-ring.shaking {
+    animation: dishShake .2s linear infinite;
+    will-change: transform;
+  }
+  .dish-cover.shaking .dish-bowl {
+    filter: brightness(1.15) drop-shadow(0 0 18px rgba(255,215,120,.7));
+  }
+  @keyframes dishShake {
+    0%   { transform: translate(0, 0) rotate(0deg); }
+    20%  { transform: translate(-7px, -15px) rotate(-4deg) scale(1.03); }
+    40%  { transform: translate(8px, 12px) rotate(4deg) scale(0.98); }
+    60%  { transform: translate(-8px, -10px) rotate(-3deg) scale(1.02); }
+    80%  { transform: translate(7px, 9px) rotate(3deg) scale(0.99); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+  }
+
   .dish-cover.flying { animation:dishFly .68s cubic-bezier(.45,0,.7,1) forwards; }
   @keyframes dishFly {
     100% { transform:translate(var(--fly-x,420px),var(--fly-y,-260px)) rotate(130deg) scale(.75); opacity:0; }
