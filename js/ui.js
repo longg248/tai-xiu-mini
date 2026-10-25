@@ -136,7 +136,7 @@ async function cloudLoad(key){
 
 function saveGame(){
   const payload={
-    b:state.balance, h:state.history.slice(0,40), s:stats, set:settings,
+    b:state.balance, h:state.history.slice(0,40), c:state.chat, s:stats, set:settings,
     pt:state.poolTai, px:state.poolXiu, pr:state.promo
   };
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); }catch(e){}
