@@ -3,7 +3,7 @@
    ===================================================================== */
 const Dish={
   el:null, dragging:false, sx:0, sy:0, dx:0, dy:0,
-  busy:false, opened:false, shaking:false,
+  busy:false, opened:false, shaking:false, _raf:null,
   onOpen:null, onPeek:null, onUnpeek:null,
   THRESHOLD:130, lift:0, peeked:[false,false,false],
 
@@ -78,18 +78,24 @@ const Dish={
 
   move(e){
     if(!this.dragging || this.shaking) return;
-    this.dx=e.clientX-this.sx;
-    this.dy=e.clientY-this.sy;
-    const distHypot=Math.hypot(this.dx,this.dy);
-    this.lift=Math.min(1,distHypot/this.THRESHOLD);
-    const rot=Math.max(-22,Math.min(22,this.dx*0.05));
+    this._lastE = e;
+    if(this._raf) return;   /* đã có khung hâte đang chờ → bỏ qua, tránh cập nhật quá nhiều */
+    this._raf = requestAnimationFrame(()=>{
+      this._raf = null;
+      const e = this._lastE;
+      this.dx=e.clientX-this.sx;
+      this.dy=e.clientY-this.sy;
+      const distHypot=Math.hypot(this.dx,this.dy);
+      this.lift=Math.min(1,distHypot/this.THRESHOLD);
+      const rot=Math.max(-22,Math.min(22,this.dx*0.05));
 
-    this.el.style.transform=`translate(${this.dx}px,${this.dy}px) rotate(${rot}deg) scale(${1+this.lift*0.07})`;
-    this.el.style.setProperty('--lift',this.lift.toFixed(3));
-    this.setProgress(this.lift);
+      this.el.style.transform=`translate(${this.dx}px,${this.dy}px) rotate(${rot}deg) scale(${1+this.lift*0.07})`;
+      this.el.style.setProperty('--lift',this.lift.toFixed(3));
+      this.setProgress(this.lift);
 
-    /* CƠ CHẾ NẶN THEO HƯỚNG: Kiểm tra viên nào bị lòi ra theo vị trí kéo */
-    this.updatePeeksDirectional();
+      /* CƠ CHẾ NẶN THEO HƯỚNG: Kiểm tra viên nào bị lòi ra theo vị trí kéo */
+      this.updatePeeksDirectional();
+    });
   },
 
   /* Kiểm tra viên nào bị lòi ra ngoài mép bát dựa trên vector kéo (dx, dy) */
@@ -130,6 +136,7 @@ const Dish={
 
   end(){
     if(!this.dragging) return;
+    cancelAnimationFrame(this._raf); this._raf=null;
     this.dragging=false;
     this.el.classList.remove('dragging');
     this.setProgress(this.lift);

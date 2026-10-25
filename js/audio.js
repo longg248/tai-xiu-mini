@@ -40,16 +40,19 @@ const Sound = {
   flip(){ if(this.txQuiet()) return; this.tone(430,.05,'square',.05); this.tone(760,.04,'triangle',.03,.03); },  /* tiếng lật xúc xắc */
   thud(){ if(this.txQuiet()) return; this.tone(110,.14,'sine',.1); this.tone(70,.18,'triangle',.07,.03); },      /* tiếng chén úp lại */
   dice(){ if(this.txQuiet()) return; for(let i=0;i<16;i++) this.tone(110+Math.random()*260,.028,'square',.035,i*.055); },
-  shakeDice(dur=2200){
+  shakeDice(dur=2000){
     if(!this.on || this.txQuiet()) return;
     this.init();
-    const count = Math.floor(dur / 65);
+    /* Giảm số oscillator tạo đồng thời để không nghẽn audio thread (lỗi lag/delay trên mobile).
+       Vẫn duy trì cảm xúc xóc qua tần số cao nhưng ít node hơn. */
+    const count = Math.floor(dur / 110);
+    const step  = dur / count / 1000;
     for(let i=0; i<count; i++){
-      const delay = (i * 0.065) + (Math.random() * 0.015);
-      const freq = 130 + Math.random() * 320;
-      const vol = 0.045 + Math.random() * 0.045;
+      const delay = i * step + (Math.random() * 0.008);
+      const freq = 130 + Math.random() * 300;
+      const vol = 0.04 + Math.random() * 0.04;
       const type = Math.random() > 0.5 ? 'triangle' : 'square';
-      this.tone(freq, 0.038, type, vol, delay);
+      this.tone(freq, 0.032, type, vol, delay);
     }
   },
   win(){ [523,659,784,1046].forEach((f,i)=>this.tone(f,.22,'triangle',.08,i*.085)); },
