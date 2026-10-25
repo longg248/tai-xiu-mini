@@ -77,6 +77,125 @@ function crXdScore(cards){
   return best;
 }
 
+/* =====================================================================
+   NHẬN DIỆN BỘ BÀI TIẾN LÊN / SÂM LỐC
+   Đôi · Sám cô · Tứ quý · Sảnh · Ba đôi thông · Bốn đôi thông
+   ===================================================================== */
+function crConsecutive(ranks){
+  for(let i=1; i<ranks.length; i++) if(ranks[i] !== ranks[i-1] + 1) return false;
+  return true;
+}
+function crEvalTL(cards){
+  const n = (cards || []).length;
+  if(!n) return null;
+  const sorted = [...cards].sort((a,b)=>a-b);
+  const ranks = sorted.map(c=>c>>2);
+  const high = sorted[n-1];
+  const counts = new Map();
+  ranks.forEach(r => counts.set(r, (counts.get(r) || 0) + 1));
+  const groups = [...counts.keys()].sort((a,b)=>a-b);
+
+  if(n===1) return { t:'single', len:1, high, name:'LÁ LẺ' };
+  if(n===2 && groups.length===1) return { t:'pair', len:2, high, name:'ĐÔI' };
+  if(n===3 && groups.length===1) return { t:'triple', len:3, high, name:'SÁM CÔ' };
+  if(n===4 && groups.length===1) return { t:'four', len:4, high, name:'TỨ QUÝ' };
+  if(n===6 && groups.length===3 && groups.every(r=>counts.get(r)>=2) && crConsecutive(groups))
+    return { t:'pairs3', len:6, high, name:'BA ĐÔI THÔNG' };
+  if(n===8 && groups.length===4 && groups.every(r=>counts.get(r)>=2) && crConsecutive(groups))
+    return { t:'pairs4', len:8, high, name:'BỐN ĐÔI THÔNG' };
+  if(n>=3 && groups.length===n && !groups.includes(15) && crConsecutive(groups))
+    return { t:'straight', len:n, high, name:'SẢNH' };
+  return null;
+}
+function crBeatsTL(a, b){
+  if(!b) return true;
+  if(!a) return false;
+  const isTwo = c => c != null && (c>>2) === 15;
+  if(a.t==='four' && b.t==='single' && isTwo(b.high)) return true;
+  if(a.t==='four' && b.t==='pair' && isTwo(b.high)) return true;
+  if(a.t==='four' && b.t==='pairs3') return true;
+  if(a.t==='four' && b.t==='four') return a.high > b.high;
+  if(a.t==='pairs3' && b.t==='single' && isTwo(b.high)) return true;
+  if(a.t==='pairs3' && b.t==='pairs3') return a.high > b.high;
+  if(a.t==='pairs4' && (b.t==='single' || b.t==='pair') && isTwo(b.high)) return true;
+  if(a.t==='pairs4' && (b.t==='pairs3' || b.t==='four')) return true;
+  if(a.t==='pairs4' && b.t==='pairs4') return a.high > b.high;
+  return a.t===b.t && a.len===b.len && a.high > b.high;
+}
+function crComboLabel(combo, cards){
+  if(!combo) return '';
+  const cs = cards || combo.cards || [];
+  const rs = [...new Set(cs.map(c=>c>>2))].sort((a,b)=>a-b);
+  const rt = r => CR_RANK_TXT[r] || '?';
+  if(!rs.length) return combo.name;
+  if(combo.t==='straight' || combo.t==='pairs3' || combo.t==='pairs4')
+    return combo.name + ' ' + rt(rs[0]) + '–' + rt(rs[rs.length-1]);
+  return combo.name + ' ' + rt(combo.high>>2);
+}
+/* Tìm mọi bộ có thể đánh từ bài trên tay. last = eval của bài trên bàn */
+function crFindCombos(hand, last){
+  const by = new Map();
+  [...(hand || [])].sort((a,b)=>a-b).forEach(c=>{
+    const r = c>>2;
+    if(!by.has(r)) by.set(r, []);
+    by.get(r).push(c);
+  });
+  const ranks = [...by.keys()].sort((a,b)=>a-b);
+  const out = [];
+  const add = cards => {
+    const ev = crEvalTL(cards);
+    if(ev) out.push({ ...ev, cards });
+  };
+
+  ranks.forEach(r => { if(by.get(r).length>=2) add(by.get(r).slice(0,2)); });
+  ranks.forEach(r => { if(by.get(r).length>=3) add(by.get(r).slice(0,3)); });
+  ranks.forEach(r => { if(by.get(r).length===4) add(by.get(r).slice(0,4)); });
+
+  for(let i=0; i+2<ranks.length; i++){
+    const w = ranks.slice(i, i+3);
+    if(w[2]===w[0]+2 && w.every(r=>by.get(r).length>=2))
+      add(w.flatMap(r=>by.get(r).slice(0,2)));
+  }
+  for(let i=0; i+3<ranks.length; i++){
+    const w = ranks.slice(i, i+4);
+    if(w[3]===w[0]+3 && w.every(r=>by.get(r).length>=2))
+      add(w.flatMap(r=>by.get(r).slice(0,2)));
+  }
+
+  const sr = ranks.filter(r=>r!==15);
+  const runs = [];
+  let run = [];
+  sr.forEach((r, i) => {
+    if(i===0 || r===sr[i-1]+1) run.push(r);
+    else { if(run.length) runs.push(run); run = [r]; }
+  });
+  if(run.length) runs.push(run);
+  runs.forEach(r => {
+    for(let len=r.length; len>=3; len--)
+      for(let i=0; i+len<=r.length; i++)
+        add(r.slice(i, i+len).map(x=>by.get(x)[0]));
+  });
+
+  ranks.forEach(r => add([by.get(r)[0]]));
+
+  const order = { pairs4:0, pairs3:1, four:2, straight:3, triple:4, pair:5, single:6 };
+  if(last){
+    return out.filter(c => crBeatsTL(c, last))
+      .sort((a,b) => (a.high-b.high) || (a.cards.length-b.cards.length));
+  }
+  return out.sort((a,b) =>
+    (order[a.t]-order[b.t]) || (b.cards.length-a.cards.length) || (b.high-a.high));
+}
+
+/* Tách sảnh bài ra khỏi #stage 1600×900 để giao diện dùng đúng kích thước
+   màn hình thật (không bị scale nhỏ / letterbox trên điện thoại & laptop). */
+(function crDetachScreens(){
+  ['cardsHub','cardsRoom'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && el.parentElement && el.parentElement.id === 'stage') document.body.appendChild(el);
+  });
+})();
+
 const CardsUI = {
   active:false,
   inRoom:false,
@@ -118,6 +237,7 @@ const CardsUI = {
     this.inRoom = false;
     this.room = null;
     this._resultShown = false;
+    document.body.classList.add('cards-active');
     crStopTxAuto();
     crPreload();
     const hub = this.$('cardsHub');
@@ -149,6 +269,7 @@ const CardsUI = {
     this._resultShown = false;
     this._lastPhase = '';
     this._lastTurn = -1;
+    document.body.classList.remove('cards-active');
     const hub = this.$('cardsHub');
     const room = this.$('cardsRoom');
     if(hub) hub.classList.remove('open');
@@ -338,6 +459,7 @@ const CardsUI = {
   openRoom(){
     this.inRoom = true;
     this.active = true;
+    document.body.classList.add('cards-active');
     crStopTxAuto();
     crPreload();
     const hub = this.$('cardsHub'); if(hub) hub.classList.remove('open');
@@ -379,6 +501,7 @@ const CardsUI = {
     this.renderCenter();
     this.renderActions(me);
     this.renderHand(me);
+    this.renderCombos(me);
     this.renderMe(me);
     this.renderLog();
   },
@@ -526,14 +649,23 @@ const CardsUI = {
     }
 
     const sel = this.selected.size;
+    const selCards = [...this.selected];
+    const combo = crEvalTL(selCards);
+    const mustBeat = st.lastPlay && st.lastPlay.seat !== st.mySeat ? st.lastPlay.eval : null;
+    const comboOk = !!(combo && (!mustBeat || crBeatsTL(combo, mustBeat)));
     const canPlay = myTurn && sel > 0;
     const canPass = myTurn && !!st.lastPlay;
+    const selHint = sel
+      ? `Đã chọn <b>${sel}</b> lá${combo ? ' · <b>' + crComboLabel(combo, selCards) + '</b>' : ' · chưa thành bộ'}${combo && !comboOk ? ' · <b>không đè được</b>' : ''}`
+      : 'Lượt của bạn — chọn bài hoặc bấm <b>GỢI Ý</b>.';
     box.innerHTML = `
       <button class="cr-btn blue" id="crSort">SẮP BÀI</button>
+      <button class="cr-btn green" id="crSuggest" ${myTurn ? '' : 'disabled'}>💡 GỢI Ý</button>
       <button class="cr-btn gold" id="crPlay" ${canPlay ? '' : 'disabled'}>ĐÁNH BÀI${sel ? ' (' + sel + ')' : ''}</button>
       <button class="cr-btn ghost" id="crPass" ${canPass ? '' : 'disabled'}>BỎ LƯỢT</button>
-      <span class="cr-hint">${myTurn ? 'Lượt của bạn — chọn bài rồi bấm ĐÁNH BÀI.' : 'Đang chờ <b>' + crEsc(st.turnName || 'người chơi') + '</b>…'}</span>`;
+      <span class="cr-hint">${myTurn ? selHint : 'Đang chờ <b>' + crEsc(st.turnName || 'người chơi') + '</b>…'}</span>`;
     this.bind('crSort', () => this.sortHand());
+    this.bind('crSuggest', () => this.hintPlay());
     this.bind('crPlay', () => this.act('play', { cards:[...this.selected] }));
     this.bind('crPass', () => this.act('pass'));
   },
@@ -596,6 +728,101 @@ const CardsUI = {
     }
   },
 
+  renderCombos(me){
+    let box = this.$('crCombos');
+    if(!box){
+      box = document.createElement('div');
+      box.id = 'crCombos';
+      box.className = 'cr-combos';
+      const hand = this.$('crHand');
+      if(hand && hand.parentNode) hand.parentNode.insertBefore(box, hand);
+    }
+    const st = this.room;
+    if(!st) return;
+    const hall = st.hall;
+    const pick = st.phase === 'playing' && this.myTurn() &&
+      (hall === 'tienlen13' || hall === 'tienlen6' || hall === 'samloc');
+    if(!pick || !st.hand || !st.hand.length){
+      box.style.display = 'none';
+      box.innerHTML = '';
+      box._sig = '';
+      return;
+    }
+    box.style.display = 'flex';
+
+    const lastEval = st.lastPlay && st.lastPlay.seat !== st.mySeat ? st.lastPlay.eval : null;
+    const sig = st.hand.join(',') + '|' +
+      (lastEval ? lastEval.t + ':' + lastEval.len + ':' + lastEval.high : '0');
+    if(box._sig !== sig){
+      box._sig = sig;
+      let list = crFindCombos(st.hand, lastEval);
+      if(lastEval) list = list.slice(0, 8);
+      else list = list.filter(c => c.t !== 'single').slice(0, 10);
+
+      if(!list.length){
+        box.innerHTML = '<span class="cr-combos-lbl">GỢI Ý</span><span class="cr-combo-none">' +
+          (lastEval ? 'Không có bộ đỡ được — hãy bỏ lượt' : 'Không có bộ đặc biệt — bấm GỢI Ý để đánh lá nhỏ nhất') +
+          '</span>';
+      } else {
+        box.innerHTML = '<span class="cr-combos-lbl">GỢI Ý</span>' + list.map(c =>
+          `<button class="cr-combo" data-cards="${c.cards.join(',')}">${crEsc(crComboLabel(c))}</button>`
+        ).join('');
+        box.querySelectorAll('[data-cards]').forEach(el => {
+          el.onclick = () => this.selectCombo(el.dataset.cards.split(',').map(Number));
+        });
+      }
+    }
+    this.paintComboActive();
+  },
+
+  paintComboActive(){
+    const box = this.$('crCombos');
+    if(!box) return;
+    const sel = [...this.selected].sort((a,b)=>a-b).join(',');
+    box.querySelectorAll('[data-cards]').forEach(el => {
+      const cs = el.dataset.cards.split(',').map(Number).sort((a,b)=>a-b).join(',');
+      el.classList.toggle('on', !!sel && cs === sel);
+    });
+  },
+
+  paintHandSelection(){
+    const box = this.$('crHand');
+    if(!box) return;
+    box.querySelectorAll('.cr-card').forEach(el => {
+      el.classList.toggle('sel', this.selected.has(+el.dataset.card));
+    });
+  },
+
+  selectCombo(cards){
+    if(!this.myTurn()) return;
+    const hand = (this.room && this.room.hand) || [];
+    this.selected = new Set((cards || []).filter(c => hand.includes(c)));
+    this.paintHandSelection();
+    this.paintComboActive();
+    this.renderActions(this.myPlayer());
+    if(typeof Sound !== 'undefined') Sound.click();
+  },
+
+  hintPlay(){
+    if(!this.myTurn()) return;
+    const st = this.room;
+    const lastEval = st.lastPlay && st.lastPlay.seat !== st.mySeat ? st.lastPlay.eval : null;
+    const all = crFindCombos(st.hand || [], lastEval);
+    let pick = null;
+    if(lastEval){
+      pick = all[0] || null;
+    } else {
+      const singles = all.filter(c => c.t === 'single').sort((a,b) => a.high - b.high);
+      pick = singles[0] || all[0] || null;
+    }
+    if(!pick){
+      const hint = this.$('crActions') && this.$('crActions').querySelector('.cr-hint');
+      if(hint) hint.innerHTML = '<b>Không có bộ đỡ được</b> — hãy bỏ lượt.';
+      return;
+    }
+    this.selectCombo(pick.cards);
+  },
+
   renderMe(me){
     const box = this.$('crMe');
     if(!box) return;
@@ -627,6 +854,7 @@ const CardsUI = {
     if(on) this.selected.add(c);
     else this.selected.delete(c);
     if(el) el.classList.toggle('sel', on);   /* chỉ đổi lá được chọn — không render lại cả bộ bài */
+    this.paintComboActive();
     if(typeof Sound !== 'undefined') Sound.click();
     this.renderActions(this.myPlayer());
   },

@@ -2,10 +2,14 @@
    VARIABLES & BASE STYLES
    ===================================================================== */
 * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:100%; height:100%; background:#000; overflow:hidden; }
+  html,body { width:100%; height:100%; background:#0b0704; overflow:hidden; }
   :root{
     --b1:#f0c040; --b2:#c9971e; --b3:#5a3a18; --b4:#8a5a2b; --hl:#f6d77a; --chip:#b08d57;
     --stageBg:radial-gradient(ellipse at 50% 38%, #2b1a0c 0%, #180f07 45%, #0b0704 100%);
     --boardBg:linear-gradient(180deg, #33220f 0%, #1c1208 45%, #261708 100%);
   }
-  body { font-family:"Segoe UI", Tahoma, Arial, sans-serif; }
+  body {
+    font-family:"Segoe UI", Tahoma, Arial, sans-serif;
+    background: var(--stageBg);
+    background-attachment: fixed;
+  }

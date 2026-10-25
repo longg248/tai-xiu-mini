@@ -9,6 +9,11 @@
     left:12px; right:12px; top:auto; bottom:12px; width:auto; max-height:58%;
     animation:histUp .3s cubic-bezier(.2,1.2,.4,1);
   }
+  /* ưu tiên cao hơn rule .fluid-screen (dùng !important) */
+  body.mobile #histOverlay.fluid-screen {
+    left:12px !important; right:12px !important; top:auto !important; bottom:12px !important;
+    width:auto !important; max-height:58% !important; height:auto !important;
+  }
   @keyframes histUp { from{transform:translateY(90px); opacity:0} to{transform:none; opacity:1} }
   body.mobile .poster { display:none; }        /* bỏ poster hai bên cho gọn */
   body.mobile .bg-card { display:none; }        /* bớt hiệu năng trên điện thoại */
@@ -52,6 +57,8 @@
   body.mobile .lob-top { gap:8px; }
   /* portrait: cảnh báo xoay, ẩn round-bar */
   body.portrait .round-bar { display:none; }
+  /* đang ở sảnh/bàn bài: không chặn màn hình bằng gợi ý xoay */
+  body.cards-active .rotate-hint { display:none !important; }
 
   /* gợi ý xoay ngang trên điện thoại dọc */
   .rotate-hint {

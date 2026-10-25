@@ -4,7 +4,8 @@
 
 /* ---------------- HUB ---------------- */
 .cards-hub {
-  position: absolute; inset: 0; z-index: 62;
+  position: fixed; inset: 0; z-index: 62;
+  width: 100%; height: 100vh; height: 100dvh;
   display: none; flex-direction: column;
   background:
     radial-gradient(ellipse at 50% -10%, rgba(255,190,70,.18), transparent 55%),
@@ -171,7 +172,9 @@
 
 /* ---------------- BÀN CHƠI ---------------- */
 .cards-room {
-  position: absolute; inset: 0; z-index: 63;
+  --cr-card-w: clamp(84px, 6.6vw, 112px);
+  position: fixed; inset: 0; z-index: 63;
+  width: 100%; height: 100vh; height: 100dvh;
   display: none; flex-direction: column;
   background:
     radial-gradient(ellipse at 50% 38%, #1b6b42 0%, #0d3b25 48%, #061a11 100%);
@@ -286,9 +289,11 @@
 .pos-5-4 { right: 58px; bottom: 50px; }
 
 .cr-center {
-  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
-  width: 640px; min-height: 170px; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 9px; text-align: center;
+  /* Neo giữa vùng trống giữa ghế trên và đáy sân — không đè ghế top-center */
+  position: absolute; left: 50%; top: 126px; bottom: 6px;
+  transform: translateX(-50%);
+  width: 640px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px; text-align: center;
   pointer-events: none;
 }
 .cr-center .lbl {
@@ -303,16 +308,20 @@
 }
 .cr-center .sub { font-size: 13px; color: #b8d9c5; line-height: 1.55; }
 .cr-center .sub b { color: #ffd166; }
-.cr-play-cards { display: flex; justify-content: center; align-items: center; min-height: 108px; padding: 4px 10px; }
+/* lá bài trên bàn: không bị bóp méo khi sân thấp */
+.cr-play-cards { display: flex; justify-content: center; align-items: center; min-height: 86px; padding: 4px 10px; flex-shrink: 0; }
 .cr-pot {
-  font-size: 16px; font-weight: 900; color: #ffdf7e;
+  font-size: 15px; font-weight: 900; color: #ffdf7e;
   background: linear-gradient(180deg, rgba(80,50,10,.7), rgba(30,18,4,.8));
-  border: 1px solid rgba(255,205,100,.3); border-radius: 999px; padding: 5px 18px;
+  border: 1px solid rgba(255,205,100,.3); border-radius: 999px; padding: 4px 16px;
 }
 .cr-pot::before { content: "POT "; font-size: 9px; letter-spacing: 1.5px; color: #c8a24a; }
 
+.cr-info-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 12px; padding: 8px 26px 0; flex-shrink: 0; position: relative; z-index: 7;
+}
 .cr-me {
-  position: absolute; left: 26px; bottom: 12px; z-index: 7;
   display: flex; align-items: center; gap: 12px;
   background: linear-gradient(180deg, rgba(4,22,14,.92), rgba(2,12,8,.95));
   border: 1px solid rgba(95,228,255,.32); border-radius: 15px;
@@ -323,15 +332,15 @@
 .cr-me .cr-meta { color: #8ed7e6; font-size: 12px; }
 .cr-me .cr-turn-dot { position: static; transform: none; margin-left: 8px; font-size: 9px; }
 .cr-log {
-  position: absolute; right: 26px; bottom: 14px; z-index: 7; max-width: 380px;
+  max-width: 380px;
   font-size: 11px; line-height: 1.65; color: rgba(210,235,220,.65);
   text-align: right; pointer-events: none;
 }
 .cr-log div:last-child { color: #d9f3e4; }
 
 .cr-bottom {
-  height: 288px; flex-shrink: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end; gap: 14px; padding: 6px 30px 12px;
+  height: auto; min-height: 300px; flex-shrink: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end; gap: 10px; padding: 6px 30px 12px;
   position: relative; z-index: 6;
 }
 .cr-actions { display: flex; gap: 12px; align-items: center; min-height: 46px; flex-wrap: wrap; justify-content: center; }
@@ -351,30 +360,62 @@
 .cr-btn.ghost { background: rgba(255,255,255,.08); color: #e8f3ec; border: 1px solid rgba(255,255,255,.18); }
 .cr-btn.on { box-shadow: 0 0 0 2px rgba(120,255,180,.35), 0 0 18px rgba(60,220,130,.4); }
 
+/* dải gợi ý bộ bài (đôi / sảnh / ba đôi thông / bốn đôi thông) */
+.cr-combos {
+  display: none; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 6px; width: 100%; max-width: 1180px; min-height: 30px; padding: 0 4px;
+}
+.cr-combos-lbl {
+  font-size: 9px; font-weight: 900; letter-spacing: 1.4px; color: #8fd9b1;
+  border: 1px solid rgba(110,230,170,.28); background: rgba(20,90,55,.28);
+  border-radius: 999px; padding: 4px 9px; white-space: nowrap;
+}
+.cr-combo {
+  border: 1px solid rgba(255,215,120,.32); background: rgba(255,255,255,.055);
+  color: #ffe6ac; border-radius: 999px; padding: 5px 11px; cursor: pointer;
+  font-family: inherit; font-size: 11px; font-weight: 800; letter-spacing: .2px;
+  white-space: nowrap; transition: .13s;
+}
+.cr-combo:hover { background: rgba(255,215,120,.16); border-color: rgba(255,215,120,.6); }
+.cr-combo.on {
+  background: linear-gradient(180deg, #ffe27d, #d69b21); color: #3a2300;
+  border-color: #fff0b0; box-shadow: 0 3px 10px rgba(220,150,20,.4);
+}
+.cr-combo-none { font-size: 10px; color: #a9c7b7; padding: 3px 6px; }
+
 .cr-hand {
-  display: flex; justify-content: center; align-items: flex-end;
-  width: 100%; min-height: 174px; padding: 30px 16px 2px;
+  display: flex; justify-content: center; align-items: flex-end; flex-wrap: nowrap;
+  width: 100%; min-height: calc(var(--cr-card-w) * 1.52 + 34px);
+  padding: 32px 16px 2px;
 }
 .cr-hand-msg { font-size: 14px; color: #9fc7ae; padding: 36px 10px; text-align: center; }
 .cr-hand-msg b { color: #ffd166; }
 
 .cr-card {
-  position: relative; width: 94px; height: 142px; flex-shrink: 0;
+  position: relative; width: var(--cr-card-w); height: auto; flex-shrink: 0;
+  aspect-ratio: 180 / 272;
   border-radius: 9px; background: transparent;
   box-shadow: 0 6px 18px rgba(0,0,0,.68), 0 1px 2px rgba(0,0,0,.7);
-  transition: transform .16s cubic-bezier(.2,1.3,.4,1), margin .16s, box-shadow .16s;
-  margin-left: -28px;
-  user-select: none;
+  transition: transform .16s cubic-bezier(.2,1.3,.4,1), box-shadow .16s, filter .16s;
+  margin-left: calc(var(--cr-card-w) * -0.28);
+  user-select: none; touch-action: manipulation;
 }
 .cr-hand .cr-card:first-child { margin-left: 0; }
 .cr-card img { width: 100%; height: 100%; display: block; border-radius: 9px; pointer-events: none; }
 .cr-card.pick { cursor: pointer; }
-.cr-card.pick:hover { transform: translateY(-18px) scale(1.05); z-index: 40 !important; }
+.cr-card.pick:hover { transform: translateY(-12px); filter: brightness(1.08); }
+/* Lá đã chọn chỉ nhấc lên, KHÔNG tăng z-index / scale để không che lá bên cạnh */
 .cr-card.sel {
-  transform: translateY(-34px) scale(1.06); z-index: 50 !important;
+  transform: translateY(-30px);
   box-shadow: 0 16px 32px rgba(0,0,0,.8), 0 0 0 2px #ffd15c, 0 0 22px rgba(255,200,70,.7);
+  filter: brightness(1.08);
 }
-.cr-card.small { width: 62px; height: 94px; margin-left: -30px; border-radius: 7px; }
+.cr-card.small {
+  --cr-card-w: clamp(46px, 4vw, 64px);
+  width: var(--cr-card-w); height: auto;
+  margin-left: calc(var(--cr-card-w) * -0.3);
+  border-radius: 7px;
+}
 .cr-card.small:first-child { margin-left: 0; }
 .cr-card.small img { border-radius: 7px; }
 .cr-card.back {
@@ -428,121 +469,293 @@
 .cr-res-row .outcome.push { color: #ffd166; }
 .cr-res-actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
 
-/* Bố cục đã được scale theo stage 1600×900 — không dùng media query
-   vì viewport thật có thể nhỏ hơn nhưng stage vẫn giữ tỉ lệ 16:9. */
-
 /* =====================================================================
-   RESPONSIVE — TABLET (max-width: 1024px) & MOBILE (max-width: 767px)
+   RESPONSIVE THẬT — sảnh bài đã tách khỏi #stage nên dùng đúng viewport
    ===================================================================== */
+
+/* -------- LAPTOP NHỎ / TABLET NGANG (≤ 1100px) -------- */
+@media (max-width: 1100px) {
+  .ch-right { flex: 0 0 360px; }
+}
 
 /* -------- TABLET (≤ 1024px) -------- */
 @media (max-width: 1024px) {
-  /* Hub: 2 cột sảnh thay vì 3 */
+  .ch-top { height: 62px; padding: 0 20px; gap: 14px; }
+  .ch-brand { font-size: 22px; }
+  .ch-body { padding: 18px 20px 22px; gap: 18px; }
   .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-
-  /* Panel phải thu nhỏ lại */
   .ch-right { flex: 0 0 340px; }
 
-  /* Lá bài nhỏ hơn một chút */
-  .cr-card { width: 78px; height: 118px; margin-left: -24px; }
-  .cr-card.small { width: 52px; height: 79px; margin-left: -24px; }
-
-  /* Ghế đối thủ: giảm padding */
-  .cr-seat { width: 160px; padding: 7px 10px 7px; }
-
-  /* Bottom khu vực bài */
-  .cr-bottom { height: 250px; padding: 4px 18px 10px; }
-  .cr-hand { min-height: 148px; padding: 24px 12px 2px; }
+  .cr-top { height: 58px; padding: 0 16px; gap: 12px; }
+  .cr-title span { font-size: 19px; }
+  .cr-seat { width: 160px; padding: 7px 10px; }
+  .cr-bottom { min-height: 0; padding: 4px 14px 10px; gap: 8px; }
+  .cr-hand { min-height: 0; padding: 26px 10px 0; }
+  .cr-info-row { padding: 8px 16px 0; }
+  .cr-me { padding: 8px 12px; }
+  .cr-log { max-width: 280px; }
 }
 
-/* -------- MOBILE (≤ 767px) -------- */
-@media (max-width: 767px) {
-  /* Hub: 1 cột, xếp dọc */
-  .cards-hub { flex-direction: column; }
-  .ch-top { height: 56px; padding: 0 16px; gap: 12px; }
-  .ch-brand { font-size: 20px; }
-  .ch-user span { font-size: 11px; max-width: 130px; }
-  .ch-user b { font-size: 14px; }
+/* Tablet dựng dọc: bài xếp lưới 7 cột cho to & dễ bấm */
+@media (max-width: 1024px) and (orientation: portrait) {
+  .cr-hand {
+    flex-wrap: wrap; gap: 7px; padding: 8px 8px 2px;
+    align-items: flex-end; justify-content: center;
+  }
+  .cr-hand .cr-card {
+    width: calc((100% - 42px) / 7);
+    margin-left: 0; flex: 0 0 auto;
+  }
+  .cr-hand .cr-card.small { width: calc((100% - 42px) / 7); margin-left: 0; }
+}
 
-  .ch-body { flex-direction: column; gap: 14px; padding: 14px 12px 16px; overflow-y: auto; }
+/* Hub: xếp dọc khi màn hẹp để panel chi tiết không bị bóp */
+@media (max-width: 900px) {
+  .ch-body { flex-direction: column; gap: 12px; overflow-y: auto; }
   .ch-left { flex: none; }
-  .ch-right { flex: none; min-height: 320px; }
-  .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .ch-hall { min-height: 108px; padding: 12px 12px 10px; }
-  .ch-hall .ic { font-size: 26px; }
-  .ch-hall .nm { font-size: 13px; margin-top: 7px; }
-  .ch-hall .ds { font-size: 10px; }
+  .ch-right { flex: none; min-height: 0; }
+  .ch-tables { max-height: 300px; }
+}
 
-  .ch-stakes { gap: 6px; padding: 12px 14px 8px; }
-  .ch-stake { min-width: 60px; padding: 8px 2px; font-size: 11px; }
-  .ch-tables { padding: 4px 14px 10px; }
-  .ch-table-row { padding: 8px 10px; gap: 8px; }
-  .ch-table-row .no { font-size: 11px; min-width: 48px; }
-  .ch-quick { font-size: 13px; padding: 12px; }
+/* -------- ĐIỆN THOẠI (≤ 767px, dựng dọc) -------- */
+@media (max-width: 767px) {
+  /* ===== HUB ===== */
+  .ch-top {
+    height: auto; min-height: 52px; flex-wrap: wrap; gap: 8px;
+    padding: calc(6px + env(safe-area-inset-top)) 12px 6px;
+  }
+  .ch-back { padding: 6px 10px; font-size: 11px; border-radius: 8px; }
+  .ch-brand { font-size: 17px; letter-spacing: .3px; gap: 6px; }
+  .ch-brand span { display: none; }
+  .ch-user { margin-left: auto; padding: 4px 8px; gap: 6px; border-radius: 9px; }
+  .ch-user span { font-size: 10px; max-width: 84px; }
+  .ch-user b { font-size: 12px; }
 
-  /* Bàn chơi: thanh trên gọn lại */
-  .cr-top { height: 52px; padding: 0 14px; gap: 10px; }
-  .cr-title span { font-size: 16px; }
-  .cr-title b { font-size: 11px; }
-  .cr-title i { font-size: 9px; padding: 2px 6px; }
-  .cr-phase { padding: 5px 10px; font-size: 10px; gap: 6px; }
+  .ch-body {
+    flex-direction: column; gap: 12px;
+    padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+  .ch-sec-title { font-size: 12px; margin-bottom: 8px; gap: 8px; }
+  .ch-sec-title i { font-size: 9px; }
+  .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; overflow: visible; padding-right: 0; }
+  .ch-hall { min-height: 96px; padding: 10px 10px 8px; border-radius: 12px; }
+  .ch-hall .ic { font-size: 24px; }
+  .ch-hall .nm { font-size: 12px; margin-top: 6px; }
+  .ch-hall .ds { font-size: 9px; min-height: 24px; line-height: 1.35; }
+  .ch-hall .st { font-size: 7px; padding: 2px 6px; top: 8px; right: 8px; }
+  .ch-hall .cnt { font-size: 9px; bottom: 8px; right: 9px; }
+  .ch-note { margin-top: 10px; font-size: 10px; padding: 6px 9px; line-height: 1.55; }
 
-  /* Sân cỏ */
-  .cr-felt { margin: 6px 10px 0; border-width: 5px; }
+  .ch-right { border-radius: 14px; }
+  .ch-detail-head { padding: 14px 14px 10px; }
+  .ch-detail-head h3 { font-size: 16px; }
+  .ch-detail-head p { font-size: 10px; }
+  .ch-stakes { gap: 6px; padding: 10px 14px 8px; }
+  .ch-stake { flex: 1 1 40%; min-width: 0; padding: 8px 2px; font-size: 11px; }
+  .ch-tables { padding: 4px 12px 10px; max-height: 280px; }
+  .ch-table-row { padding: 8px 9px; gap: 7px; flex-wrap: wrap; }
+  .ch-table-row .no { font-size: 11px; min-width: 52px; }
+  .ch-table-row .meta { font-size: 9px; flex: 1 1 100px; }
+  .ch-table-row .ph { font-size: 8px; }
+  .ch-join { padding: 7px 10px; font-size: 10px; }
+  .ch-detail-foot { padding: 10px 14px 12px; }
+  .ch-quick { font-size: 12px; padding: 11px; }
+  .ch-empty { font-size: 11px; padding: 20px 8px; }
 
-  /* Ghế đối thủ nhỏ lại */
-  .cr-seat { width: 120px; padding: 6px 8px; gap: 2px; border-radius: 10px; }
-  .cr-av { width: 34px; height: 34px; font-size: 15px; }
-  .cr-nm { font-size: 11px; max-width: 106px; }
+  /* ===== BÀN CHƠI ===== */
+  .cr-top {
+    height: auto; min-height: 48px; flex-wrap: wrap; gap: 6px;
+    padding: calc(6px + env(safe-area-inset-top)) 10px 6px;
+  }
+  .cr-back { padding: 6px 9px; font-size: 10px; border-radius: 7px; }
+  .cr-title { gap: 6px; flex: 1 1 auto; }
+  .cr-title span { font-size: 14px; letter-spacing: .3px; }
+  .cr-title b { font-size: 10px; }
+  .cr-title i { font-size: 8px; padding: 2px 5px; }
+  .cr-phase { padding: 4px 8px; font-size: 9px; gap: 5px; margin-left: auto; }
+  .cr-phase #crTurnLeft { min-width: 24px; }
+
+  /* Sân: ghế đối thủ thành chip gọn phía trên, nhường chỗ cho bài */
+  .cr-felt {
+    flex: 1 1 auto; min-height: 0; margin: 6px 8px 0;
+    border-width: 4px; border-radius: 18px;
+    display: flex; flex-direction: column;
+  }
+  .cr-felt::after { inset: 10px; border-radius: 14px; }
+  .cr-seats {
+    position: static; display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 4px; padding: 6px 6px 0;
+  }
+  .cr-seat {
+    position: static !important; transform: none !important;
+    width: auto; min-width: 0; flex-direction: row; align-items: center;
+    gap: 4px; padding: 3px 8px 3px 4px; border-radius: 999px;
+  }
+  .cr-seat.turn { transform: none !important; }
+  .cr-av { width: 24px; height: 24px; font-size: 11px; border-width: 1.5px; }
+  .cr-nm { font-size: 10px; max-width: 70px; }
   .cr-meta { font-size: 9px; }
-  .cr-tag { font-size: 7px; padding: 1px 5px; }
-  .cr-turn-dot { font-size: 7px; padding: 2px 7px; top: -9px; }
+  .cr-tag { display: none; }
+  .cr-turn-dot {
+    position: static; transform: none; margin-left: 2px;
+    font-size: 7px; padding: 1px 6px;
+  }
 
-  /* Vị trí ghế điều chỉnh cho màn nhỏ */
-  .pos-2-0 { left: 10px; top: 50%; transform: translateY(-50%); }
-  .pos-2-1 { right: 10px; top: 50%; transform: translateY(-50%); }
-  .pos-3-0 { left: 10px; top: 50%; transform: translateY(-50%); }
-  .pos-3-2 { right: 10px; top: 50%; transform: translateY(-50%); }
-  .pos-4-0 { left: 20px; bottom: 40px; }
-  .pos-4-1 { left: 20px; top: 28px; }
-  .pos-4-2 { right: 20px; top: 28px; }
-  .pos-4-3 { right: 20px; bottom: 40px; }
-  .pos-5-0 { left: 14px; bottom: 32px; }
-  .pos-5-1 { left: 14px; top: 22px; }
-  .pos-5-3 { right: 14px; top: 22px; }
-  .pos-5-4 { right: 14px; bottom: 32px; }
+  .cr-center {
+    position: static; transform: none; width: 100%; min-height: 0;
+    margin: auto; padding: 8px 10px; gap: 5px;
+  }
+  .cr-center .lbl { font-size: 9px; letter-spacing: 1.6px; }
+  .cr-center .big { font-size: 13px; padding: 5px 12px; }
+  .cr-center .sub { font-size: 10px; line-height: 1.45; }
+  /* lá bài trên bàn nhỏ vừa đủ + không bị bóp méo (flex-shrink) */
+  .cr-card.small { --cr-card-w: 46px; width: var(--cr-card-w); }
+  .cr-center .cr-play-cards { min-height: 0; flex-shrink: 0; padding: 2px 0; }
+  .cr-pot { font-size: 12px; padding: 3px 12px; }
 
-  /* Bài giữa bàn */
-  .cr-center { width: 90%; }
-  .cr-center .big { font-size: 14px; padding: 6px 14px; }
-  .cr-center .sub { font-size: 11px; }
+  .cr-me {
+    padding: 5px 9px 5px 5px; gap: 7px;
+    border-radius: 10px; max-width: calc(100% - 20px);
+  }
+  .cr-info-row { padding: 6px 10px 0; }
+  .cr-me .cr-av { width: 28px; height: 28px; font-size: 12px; }
+  .cr-me .cr-nm { font-size: 11px; }
+  .cr-me .cr-meta { font-size: 9px; }
+  .cr-me .cr-turn-dot { font-size: 7px; margin-left: 2px; }
+  .cr-log { display: none; }
 
-  /* Khu vực bài và nút — dạng dọc */
-  .cr-bottom { height: auto; padding: 4px 10px 8px; gap: 8px; }
-  .cr-hand { min-height: 120px; padding: 20px 8px 2px; }
-  .cr-card { width: 62px; height: 94px; margin-left: -20px; }
-  .cr-card.small { width: 44px; height: 66px; margin-left: -20px; }
-  .cr-card.pick:hover { transform: translateY(-14px) scale(1.04); }
-  .cr-card.sel { transform: translateY(-26px) scale(1.05); }
+  .cr-bottom {
+    min-height: 0; flex-shrink: 0; gap: 6px;
+    padding: 4px 0 calc(6px + env(safe-area-inset-bottom));
+  }
+  .cr-actions {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px; width: 100%; min-height: 0; padding: 0 8px;
+  }
+  .cr-btn { width: 100%; padding: 12px 6px; font-size: 13px; border-radius: 10px; letter-spacing: .2px; }
+  .cr-hint { grid-column: 1 / -1; font-size: 10px; line-height: 1.45; text-align: center; width: 100%; }
 
-  /* Nút hành động lớn hơn, dễ bấm */
-  .cr-btn { padding: 14px 20px; font-size: 13px; border-radius: 10px; }
-  .cr-actions { gap: 8px; }
-  .cr-hint { font-size: 11px; text-align: center; width: 100%; }
+  /* Gợi ý: cuộn ngang một hàng, không chiếm chiều cao */
+  .cr-combos {
+    flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto;
+    gap: 5px; min-height: 28px; padding: 0 8px 2px; max-width: 100%;
+    scrollbar-width: none;
+  }
+  .cr-combos::-webkit-scrollbar { display: none; }
+  .cr-combos-lbl, .cr-combo { flex: 0 0 auto; }
+  .cr-combos-lbl { font-size: 8px; padding: 3px 7px; }
+  .cr-combo { font-size: 10px; padding: 6px 10px; }
+  .cr-combo-none { font-size: 9px; white-space: nowrap; }
 
-  /* Thông tin bản thân */
-  .cr-me { left: 10px; bottom: 8px; padding: 7px 12px 7px 8px; gap: 8px; max-width: 260px; }
-  .cr-me .cr-nm { font-size: 12px; }
-  .cr-me .cr-meta { font-size: 10px; }
-
-  /* Log sự kiện */
-  .cr-log { right: 10px; bottom: 10px; max-width: 200px; font-size: 10px; }
+  /* Bài trên tay: lưới 5 cột, lá TO, KHÔNG chồng nhau → không chọn nhầm.
+     Dùng hết bề ngang màn hình (78px/lá trên máy 390px) cho dễ bấm. */
+  .cr-hand {
+    flex-wrap: wrap; gap: 4px 0; width: 100%;
+    min-height: 0; padding: 6px 0 2px;
+    align-items: flex-end; justify-content: center;
+  }
+  .cr-hand .cr-card {
+    width: calc(100% / 5);
+    margin-left: 0; flex: 0 0 auto;
+  }
+  .cr-hand .cr-card.small { width: calc(100% / 5); margin-left: 0; }
+  /* Lá đã chọn: chỉ nhấc nhẹ 3px (< khoảng cách hàng 4px) + viền sáng
+     → không che lá bên cạnh / lá hàng trên, không bấm nhầm. */
+  .cr-card.sel {
+    transform: translateY(-3px); z-index: auto;
+    box-shadow: 0 0 0 3px #ffd15c, 0 8px 18px rgba(0,0,0,.7), 0 0 20px rgba(255,200,70,.55);
+  }
+  .cr-card.pick:hover { transform: none; }
+  .cr-hand-msg { padding: 16px 8px; font-size: 12px; }
 
   /* Hộp kết quả */
-  .cr-result-box { padding: 16px 14px 14px; }
+  .cr-result-box { padding: 16px 14px 14px; border-radius: 16px; }
   .cr-res-title { font-size: 22px; }
+  .cr-res-sub { font-size: 11px; }
   .cr-res-row { flex-wrap: wrap; gap: 6px; }
   .cr-res-row .who { min-width: 100px; font-size: 11px; }
   .cr-res-actions { gap: 8px; }
   .cr-btn.gold, .cr-btn.ghost { padding: 12px 18px; font-size: 13px; }
+}
+
+/* -------- ĐIỆN THOẠI / TABLET NẰM NGANG, MÀN THẤP -------- */
+@media (max-width: 1024px) and (orientation: landscape) {
+  .cards-room { --cr-card-w: clamp(54px, 8vw, 84px); }
+  .cr-top { height: 48px; padding: 0 12px; gap: 10px; }
+  .cr-title span { font-size: 16px; }
+  .cr-title b { font-size: 11px; }
+  .cr-title i { font-size: 9px; }
+  .cr-phase { padding: 4px 9px; font-size: 10px; }
+  .cr-felt { margin: 5px 10px 0; border-width: 4px; }
+  .cr-seat { width: 150px; padding: 6px 9px; }
+  .cr-bottom { min-height: 0; padding: 2px 10px 4px; gap: 4px; }
+  .cr-actions { min-height: 34px; gap: 6px; }
+  .cr-btn { padding: 8px 14px; font-size: 11px; }
+  .cr-hint { font-size: 10px; }
+  .cr-combos {
+    min-height: 26px; flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .cr-combos::-webkit-scrollbar { display: none; }
+  .cr-combo { flex: 0 0 auto; font-size: 10px; padding: 4px 9px; }
+  .cr-combos-lbl { flex: 0 0 auto; font-size: 8px; }
+  .cr-hand {
+    flex-wrap: nowrap; min-height: 0;
+    padding: 22px 8px 0;
+  }
+  .cr-hand .cr-card {
+    width: var(--cr-card-w);
+    margin-left: calc(var(--cr-card-w) * -0.26);
+    flex: 0 0 auto;
+  }
+  .cr-hand .cr-card:first-child { margin-left: 0; }
+  .cr-card.sel { transform: translateY(-18px); }
+  .cr-info-row { padding: 4px 12px 0; }
+  .cr-me { padding: 5px 9px; gap: 6px; }
+  .cr-me .cr-av { width: 26px; height: 26px; font-size: 12px; }
+  .cr-me .cr-nm { font-size: 10px; }
+  .cr-me .cr-meta { font-size: 9px; }
+  .cr-log { display: none; }
+  .cr-center { width: 60%; min-height: 0; }
+  .cr-center .big { font-size: 14px; padding: 5px 14px; }
+  .cr-center .sub { font-size: 10px; }
+  .cr-center .cr-play-cards { min-height: 0; padding: 2px; }
+}
+
+@media (max-width: 1024px) and (orientation: landscape) and (max-height: 560px) {
+  .cr-felt {
+    display: flex; flex-direction: column; border-radius: 16px;
+  }
+  .cr-felt::after { inset: 8px; border-radius: 12px; }
+  .cr-seats {
+    position: static; display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 3px; padding: 4px 4px 0;
+  }
+  .cr-seat {
+    position: static !important; transform: none !important;
+    width: auto; flex-direction: row; align-items: center;
+    gap: 4px; padding: 2px 7px 2px 3px; border-radius: 999px;
+  }
+  .cr-seat .cr-av { width: 20px; height: 20px; font-size: 9px; border-width: 1px; }
+  .cr-seat .cr-nm { font-size: 9px; max-width: 60px; }
+  .cr-seat .cr-meta { font-size: 8px; }
+  .cr-seat .cr-tag { display: none; }
+  .cr-turn-dot { position: static; transform: none; font-size: 7px; padding: 1px 5px; }
+  .cr-center {
+    position: static; transform: none; width: 100%;
+    margin: auto; padding: 4px 8px; gap: 4px;
+  }
+  .cr-me { display: none; }
+
+  /* Hub ngang màn thấp: 2 cột để không phải cuộn nhiều */
+  .ch-top { height: 46px; padding: 0 12px; flex-wrap: nowrap; gap: 10px; }
+  .ch-brand { font-size: 17px; }
+  .ch-body { flex-direction: row; padding: 10px 12px; gap: 12px; overflow: hidden; }
+  .ch-left { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+  .ch-right { flex: 0 0 330px; min-height: 0; }
+  .ch-halls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ch-hall { min-height: 82px; }
+  .ch-note { display: none; }
+  .ch-tables { max-height: none; }
 }

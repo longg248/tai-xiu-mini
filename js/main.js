@@ -4,8 +4,29 @@
 /* =====-fit 16:9 + nhận biết mobile / xoay ngang =====*/
 const stage = document.getElementById('stage');
 let rotDismissed=false;
+
+/* Tách các MÀN HÌNH GIAO DIỆN (đăng nhập, trang chủ, trang phụ, modal,
+   toast) ra khỏi #stage 1600×900 và ghim cố định theo viewport thật.
+   Nhờ vậy điện thoại không còn thấy giao diện thu nhỏ tí hon và laptop
+   không bị sọc đen 2 bên do khung 16:9 bị co lại. */
+(function detachFluidScreens(){
+  ['authScreen','homeScreen','pageScreen','rotateHint','autoModal','histOverlay','toast'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el && el.parentElement && el.parentElement.id === 'stage'){
+      el.classList.add('fluid-screen');
+      document.body.appendChild(el);
+    }
+  });
+})();
+
 function fit(){
-  const s = Math.min(innerWidth/1600, innerHeight/900);
+  const vw = innerWidth, vh = innerHeight;
+  const fitS   = Math.min(vw/1600, vh/900);   /* vừa khung, có thể lộ sọc */
+  const coverS = Math.max(vw/1600, vh/900);   /* phủ kín, không lộ sọc */
+  const desktop = vw >= 1025;
+  /* Laptop/desktop: phủ kín màn hình (cắt bớt phần trang trí 2 bên) để hết sọc đen.
+     Điện thoại: giữ tỉ lệ 16:9 + gợi ý xoay ngang. */
+  const s = (desktop && coverS <= fitS*1.35) ? coverS : fitS;
   stage.style.transform = `translate(-50%,-50%) scale(${s})`;
   const portrait = innerHeight>innerWidth && innerWidth<900;   /* điện thoại dựng dọc */
   document.body.classList.toggle('mobile', innerWidth<1000);

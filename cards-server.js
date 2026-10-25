@@ -56,6 +56,15 @@ function evalTL(cards){
     return { t:'triple', len:3, high };
   if(n===4 && rankOf(s[0])===rankOf(s[1]) && rankOf(s[1])===rankOf(s[2]) && rankOf(s[2])===rankOf(s[3]))
     return { t:'four', len:4, high };
+
+  const cnt = new Map();
+  for(const c of s){ const r = rankOf(c); cnt.set(r, (cnt.get(r)||0)+1); }
+  const rs = [...cnt.keys()].sort((a,b)=>a-b);
+  if(n===6 && rs.length===3 && rs[2]===rs[0]+2 && rs.every(r=>cnt.get(r)>=2))
+    return { t:'pairs3', len:6, high };
+  if(n===8 && rs.length===4 && rs[3]===rs[0]+3 && rs.every(r=>cnt.get(r)>=2))
+    return { t:'pairs4', len:8, high };
+
   if(n>=3){
     let ok = true;
     for(let i=0; i<n-1; i++){
@@ -69,7 +78,14 @@ function evalTL(cards){
 function beatsTL(a, b){
   if(!b) return true;
   if(a.t==='four' && b.t==='single' && rankOf(b.high)===15) return true;   /* tứ quý chặt heo */
+  if(a.t==='four' && b.t==='pair' && rankOf(b.high)===15) return true;     /* tứ quý chặt đôi heo */
+  if(a.t==='four' && b.t==='pairs3') return true;
   if(a.t==='four' && b.t==='four') return a.high > b.high;
+  if(a.t==='pairs3' && b.t==='single' && rankOf(b.high)===15) return true; /* ba đôi thông chặt heo */
+  if(a.t==='pairs3' && b.t==='pairs3') return a.high > b.high;
+  if(a.t==='pairs4' && (b.t==='single' || b.t==='pair') && rankOf(b.high)===15) return true;
+  if(a.t==='pairs4' && (b.t==='pairs3' || b.t==='four')) return true;
+  if(a.t==='pairs4' && b.t==='pairs4') return a.high > b.high;
   return a.t===b.t && a.len===b.len && a.high > b.high;
 }
 
