@@ -1,0 +1,68 @@
+/* =====================================================================
+   RESPONSIVE & TỐI ƯU MOBILE / XOAY NGANG
+   ===================================================================== */
+/* ===== TỐI ƯU MOBILE ===== */
+  html, body { overscroll-behavior:none; -webkit-tap-highlight-color:transparent; }
+  body { touch-action:manipulation; }
+  /* mobile: panel lịch sử thành bottom-sheet trượt từ dưới lên */
+  body.mobile .hist-overlay {
+    left:12px; right:12px; top:auto; bottom:12px; width:auto; max-height:58%;
+    animation:histUp .3s cubic-bezier(.2,1.2,.4,1);
+  }
+  @keyframes histUp { from{transform:translateY(90px); opacity:0} to{transform:none; opacity:1} }
+  body.mobile .poster { display:none; }        /* bỏ poster hai bên cho gọn */
+  body.mobile .bg-card { display:none; }        /* bớt hiệu năng trên điện thoại */
+  body.mobile .home-screen,
+  body.mobile .page-screen,
+  body.mobile .auth-screen { padding:14px 18px 20px; }
+  body.mobile .page-head { gap:10px; }
+  body.mobile .page-nav { display:none; }        /* menu ngang dồn về nút TRANG CHỦ */
+  body.mobile .home-body { flex-direction:column; }
+  body.mobile .home-games { grid-template-columns:repeat(2,1fr); gap:12px; }
+  body.mobile .home-side { flex:auto; }
+  body.mobile .page-card { padding:14px; }
+  body.mobile .wheel-body { flex-direction:column; align-items:center; }
+  body.mobile .home-nav { margin-bottom:12px; }
+  /* mobile: tắt các hiệu ứng nặng gây lag */
+  body.mobile .board::after { display:none; }          /* sweep quét sáng — repaint liên tục */
+  body.mobile .modal-wrap,
+  body.mobile .home-screen,
+  body.mobile .page-screen,
+  body.mobile .auth-screen { backdrop-filter:none; }    /* blur rất tốn GPU điện thoại */
+  body.mobile .home-screen,
+  body.mobile .page-screen,
+  body.mobile .auth-screen {
+    background:linear-gradient(165deg, rgba(24,15,6,.985), rgba(8,5,2,.995));
+  }
+  body.mobile .modal-wrap { background:rgba(0,0,0,.87); }
+  body.mobile #wheelCanvas { box-shadow:0 0 0 4px #5a3a18; }   /* bỏ 3 lớp bóng khi quay */
+  body.mobile .dish-hint { animation:none; opacity:.92; }
+  body.mobile .btn-side.sel::after { animation:none; }
+  body.mobile .hist-overlay { box-shadow:0 -10px 30px rgba(0,0,0,.7); }
+  /* mobile lobby: 2 cột games, ẩn rank panel */
+  body.mobile .lob-rank { display:none; }
+  body.mobile .lantern { display:none; }
+  body.mobile .lob-body { flex:none; align-items:flex-start; }
+  body.mobile .lob-games { grid-template-columns:repeat(2,1fr); gap:10px; height:auto; grid-auto-rows:150px; }
+  body.mobile .lob-tile { min-height:0; }
+  body.mobile .lob-nav { gap:4px; }
+  body.mobile .lob-nav button { font-size:9px; padding:2px 6px; }
+  body.mobile .lob-nav button i { font-size:22px; }
+  body.mobile .lob-nav button.daily i { font-size:34px; }
+  body.mobile .lob-top { gap:8px; }
+  /* portrait: cảnh báo xoay, ẩn round-bar */
+  body.portrait .round-bar { display:none; }
+
+  /* gợi ý xoay ngang trên điện thoại dọc */
+  .rotate-hint {
+    position:absolute; inset:0; z-index:95; display:none; place-items:center; text-align:center;
+    background:linear-gradient(165deg,#1a1208,#060402); color:#f6d77a;
+    font-size:24px; font-weight:900; letter-spacing:3px; line-height:2.1;
+  }
+  .rotate-hint.show { display:grid; }
+  .rotate-hint span { display:block; font-size:13px; color:#9c8558; font-weight:700; letter-spacing:1px; }
+  .rot-dismiss {
+    display:block; margin:20px auto 0; padding:12px 30px; border-radius:12px; cursor:pointer;
+    background:linear-gradient(180deg,var(--hl),var(--b2)); color:#241703; border:none;
+    font-size:13px; font-weight:900; font-family:inherit; letter-spacing:1px;
+  }

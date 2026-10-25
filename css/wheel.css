@@ -1,0 +1,33 @@
+/* =====================================================================
+   MINI GAME: VÒNG QUAY MAY MẮN (LUCKY WHEEL)
+   ===================================================================== */
+/* ===== VÒNG QUAY ===== */
+  .modal-wheel { width:780px; }
+  .wheel-body { display:flex; gap:16px; padding:16px; }
+  .wheel-left { flex:0 0 360px; text-align:center; }
+  .wheel-right { flex:1; min-width:0; }
+  .wheel-pointer {
+    position:absolute; left:50%; top:-8px; transform:translateX(-50%); width:0; height:0; z-index:3;
+    border-left:13px solid transparent; border-right:13px solid transparent; border-top:24px solid var(--hl);
+    filter:drop-shadow(0 2px 4px #000);
+  }
+  #wheelCanvas {
+    border-radius:50%; display:block; margin:0 auto;
+    box-shadow:0 0 0 6px #5a3a18, 0 0 0 9px var(--b2), 0 16px 40px rgba(0,0,0,.85);
+    background:#1a1006;
+  }
+  .wheel-hash { margin-top:12px; font-size:10px; color:#9fd8ff; word-break:break-all; }
+  .wheel-info { display:flex; gap:8px; margin-bottom:12px; }
+  .wheel-info div { flex:1; background:rgba(40,26,10,.6); border:1px solid #4a3216; border-radius:10px; padding:7px 10px; }
+  .wheel-info span { font-size:10px; color:#9c8558; display:block; letter-spacing:1px; }
+  .wheel-info b { font-size:16px; color:#ffe9a8; }
+  .wheel-picks { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px; }
+  .wp {
+    padding:8px 4px; border-radius:8px; font-size:11px; font-weight:800; cursor:pointer;
+    border:1px solid #6b4a1e; background:rgba(40,26,10,.9); color:#d8c9a3; text-align:center; font-family:inherit;
+  }
+  .wp:hover { filter:brightness(1.2); }
+  .wp.red { background:linear-gradient(180deg,#c0392b,#7a1f16); color:#fff; }
+  .wp.black { background:linear-gradient(180deg,#333,#0d0d0d); color:#ffd97a; }
+  .wp.on { border-color:var(--hl); color:#241703; background:linear-gradient(180deg,var(--hl),var(--b2)); box-shadow:0 0 12px rgba(255,215,120,.5); }
+  .wheel-log { margin-top:10px; font-size:11px; color:#9c8558; line-height:1.8; max-height:96px; overflow-y:auto; }

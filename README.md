@@ -5,7 +5,10 @@
 
 Game Tài Xỉu casino 2D dạng **server–client**: một Node.js server roll kết quả mỗi ván, nhiều người chơi cược chung qua **SSE + REST**, giao diện lobby theo mẫu sòng game.
 
-- **Client**: `tai_xiu.html` — 1 file duy nhất (HTML + CSS + JS inline), sân khấu 1600×900 tự scale.
+- **Frontend**: Tách module cấu trúc chuyên nghiệp:
+  - `css/`: 7 stylesheet giao diện tách biệt (`variables.css`, `base.css`, `table.css`, `wheel.css`, `lobby.css`, `modals.css`, `responsive.css`).
+  - `js/`: 8 script module chức năng (`audio.js`, `fair.js`, `dish.js`, `game.js`, `net.js`, `wheel.js`, `ui.js`, `main.js`).
+  - `index.html` & `tai_xiu.html`: Layout HTML chuẩn ngữ nghĩa, sân khấu 1600×900 tự động scale theo mọi màn hình.
 - **Server**: `server.js` — Node.js thuần, **không cần package nào**.
 - **Provably Fair**: công bố `SHA-256(serverSeed)` trước ván, mở seed sau ván; xúc xắc = `HMAC-SHA256(serverSeed, "round:<id>")`.
 
