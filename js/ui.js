@@ -16,7 +16,12 @@
    ▸ Chưa điền key → tự chạy CHẾ ĐỘ DEMO: tài khoản lưu trên máy này,
      mật khẩu băm SHA-256 (không lưu chữ rõ).
    ===================================================================== */
-const SUPABASE={ url:'', anonKey:'' };
+// Cấu hình Supabase (nếu có biến môi trường thì tự động kích hoạt)
+window.SUPABASE = {
+  url: window.SUPABASE_URL || localStorage.getItem('sb_url') || '',
+  anonKey: window.SUPABASE_ANON_KEY || localStorage.getItem('sb_key') || ''
+};
+const SUPABASE = window.SUPABASE;
 
 const Auth={
   user:null, sb:null,

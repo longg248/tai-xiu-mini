@@ -25,6 +25,121 @@ const CFG = {
 /* DATA_DIR cho phép trỏ ra volume persistent (Render Disk, VPS mount...) */
 const DATA_FILE = path.join(process.env.DATA_DIR || __dirname, 'tx_data.json');
 
+/* =====================================================================
+   SUPABASE BACKEND INTEGRATION (Tự động kích hoạt khi có ENV hoặc fallback file)
+   ===================================================================== */
+const SB_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
+const USE_SUPABASE = !!(SB_URL && SB_KEY);
+
+const Supabase = {
+  enabled: USE_SUPABASE,
+  async req(endpoint, method='GET', body=null, headers={}){
+    if(!this.enabled) return null;
+    try {
+      const url = `${SB_URL}/rest/v1/${endpoint}`;
+      const opt = {
+        method,
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation',
+          ...headers
+        }
+      };
+      if(body) opt.body = JSON.stringify(body);
+      const res = await fetch(url, opt);
+      if(!res.ok) {
+        const txt = await res.text();
+        console.error(`[Supabase Error ${res.status}] ${endpoint}:`, txt);
+        return null;
+      }
+      const data = await res.json().catch(()=>null);
+      return data;
+    } catch(e) {
+      console.error('[Supabase Fetch Fail]:', e.message);
+      return null;
+    }
+  },
+  async loadAll(){
+    if(!this.enabled) return false;
+    try {
+      const users = await this.req('users?select=*');
+      if(Array.isArray(users)){
+        users.forEach(u => {
+          DB.users[u.email] = {
+            id: u.id,
+            email: u.email,
+            name: u.name,
+            hash: u.pass_hash,
+            balance: +u.balance,
+            wagered: +u.wagered,
+            rounds: +u.rounds,
+            guest: !!u.is_guest,
+            history: []
+          };
+        });
+      }
+      const sessions = await this.req('sessions?select=*');
+      if(Array.isArray(sessions)){
+        sessions.forEach(s => {
+          const user = Object.values(DB.users).find(u => u.id === s.user_id);
+          if(user) DB.sessions[s.token] = user.email;
+        });
+      }
+      log(`[Supabase] Đã đồng bộ ${Object.keys(DB.users).length} người chơi & ${Object.keys(DB.sessions).length} phiên đăng nhập.`);
+      return true;
+    } catch(e) {
+      console.error('[Supabase Init Error]:', e.message);
+      return false;
+    }
+  },
+  async syncUser(u){
+    if(!this.enabled || !u) return;
+    try {
+      await this.req('users', 'POST', {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        pass_hash: u.hash || '',
+        balance: Math.round(u.balance),
+        wagered: Math.round(u.wagered || 0),
+        rounds: Math.round(u.rounds || 0),
+        is_guest: !!u.guest
+      }, { 'Prefer': 'resolution=merge-duplicates' });
+    } catch(e){}
+  },
+  async syncSession(token, email){
+    if(!this.enabled) return;
+    try {
+      const u = DB.users[email];
+      if(!u) return;
+      await this.req('sessions', 'POST', { token, user_id: u.id }, { 'Prefer': 'resolution=merge-duplicates' });
+    } catch(e){}
+  },
+  async deleteSession(token){
+    if(!this.enabled) return;
+    try {
+      await this.req(`sessions?token=eq.${encodeURIComponent(token)}`, 'DELETE');
+    } catch(e){}
+  },
+  async recordRound(roundData){
+    if(!this.enabled) return;
+    try {
+      await this.req('round_history', 'POST', {
+        round_id: roundData.roundId,
+        dice: roundData.dice,
+        sum: roundData.sum,
+        result: roundData.result,
+        server_seed: roundData.serverSeed,
+        server_seed_hash: roundData.serverSeedHash,
+        hmac: roundData.hmac
+      }, { 'Prefer': 'resolution=merge-duplicates' });
+    } catch(e){}
+  }
+};
+
 /* ---------- tiện ích ---------- */
 const sha256  = s => crypto.createHash('sha256').update(s).digest('hex');
 const hmacHex = (k,m)=> crypto.createHmac('sha256',k).update(m).digest('hex');
@@ -46,8 +161,11 @@ let SEED_CUR='', MSG_CUR='';
 
 /* ---------- lưu trữ ---------- */
 let DB = { users:{}, sessions:{} };
-function loadDB(){
+async function loadDB(){
   try{ DB=JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }catch(e){ DB={users:{},sessions:{}}; }
+  if(Supabase.enabled){
+    await Supabase.loadAll();
+  }
 }
 let saveTimer=null;
 function saveDB(now){
@@ -120,6 +238,11 @@ function roll(){
     serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac});
   S.history=S.history.slice(0,40);
   saveDB();
+  Supabase.recordRound({roundId:S.roundId, dice, sum, result, serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac});
+  for(const [tok] of Object.entries(S.bets)){
+    const u = DB.sessions[tok] && DB.users[DB.sessions[tok]];
+    if(u) Supabase.syncUser(u);
+  }
   broadcast('result', ev);
   log(`VÁN #${S.roundId}: ${dice.join('+')}=${sum} → ${result==='T'?'TÀI':'XỈU'} · ${Object.keys(S.bets).length} người cược`);
 }
@@ -229,6 +352,8 @@ const server=http.createServer(async (req,res)=>{
              hash:sha256('tx:'+pass), balance:CFG.startBalance, wagered:0, rounds:0, history:[], created:Date.now()};
     DB.users[email]=u;
     const token=newToken(email); saveDB(true);
+    Supabase.syncUser(u);
+    Supabase.syncSession(token, email);
     log('Đăng ký: '+email);
     return json(res,200,{ok:true, token, user:publicUser(u)});
   }
@@ -238,6 +363,7 @@ const server=http.createServer(async (req,res)=>{
     const u=DB.users[email];
     if(!u || u.hash!==sha256('tx:'+(b.pass||''))) return json(res,200,{ok:false,error:'Email hoặc mật khẩu không đúng!'});
     const token=newToken(email); saveDB(true);
+    Supabase.syncSession(token, email);
     log('Đăng nhập: '+email);
     return json(res,200,{ok:true, token, user:publicUser(u)});
   }
@@ -247,11 +373,19 @@ const server=http.createServer(async (req,res)=>{
     const u={id:email, email:'—', name:'Khách demo', hash:'', balance:CFG.startBalance, wagered:0, rounds:0, history:[], guest:true};
     DB.users[email]=u;
     const token=newToken(email); saveDB(true);
+    Supabase.syncUser(u);
+    Supabase.syncSession(token, email);
     return json(res,200,{ok:true, token, user:publicUser(u)});
   }
   if(p==='/api/logout' && req.method==='POST'){
     const b=await body(req);
-    if(b.token && DB.sessions[b.token]){ const e=DB.sessions[b.token]; delete DB.sessions[b.token]; if(DB.users[e]&&DB.users[e].guest) delete DB.users[e]; saveDB(true); }
+    if(b.token && DB.sessions[b.token]){
+      const e=DB.sessions[b.token];
+      Supabase.deleteSession(b.token);
+      delete DB.sessions[b.token];
+      if(DB.users[e]&&DB.users[e].guest) delete DB.users[e];
+      saveDB(true);
+    }
     return json(res,200,{ok:true});
   }
   /* --- cược --- */
@@ -273,6 +407,7 @@ const server=http.createServer(async (req,res)=>{
     S.bets[b.token]={side, amount};
     S.pools[side]+=amount;
     saveDB();
+    Supabase.syncUser(u);
     broadcast('tick', tickPayload());
     return json(res,200,{ok:true, roundId:S.roundId, balance:u.balance, pools:S.pools,
                          left:S.left, phase:S.phase, players:Object.keys(S.bets).length,
@@ -289,6 +424,7 @@ const server=http.createServer(async (req,res)=>{
     S.pools[old.side]-=old.amount;
     delete S.bets[b.token];
     saveDB();
+    Supabase.syncUser(u);
     broadcast('tick', tickPayload());
     return json(res,200,{ok:true, balance:u.balance, pools:S.pools});
   }
@@ -299,6 +435,7 @@ const server=http.createServer(async (req,res)=>{
     if(!u) return json(res,200,{ok:false,error:'Chưa đăng nhập!'});
     if(u.balance>=1000) return json(res,200,{ok:false,error:'Còn tiền, không cần nạp lại!'});
     u.balance=CFG.startBalance; saveDB(true);
+    Supabase.syncUser(u);
     return json(res,200,{ok:true, balance:u.balance});
   }
   /* --- phần thưởng (wheel / khuyến mãi / VIP) cộng trừ số dư trên server --- */
@@ -310,6 +447,7 @@ const server=http.createServer(async (req,res)=>{
     if(!amount) return json(res,200,{ok:false,error:'Số tiền không hợp lệ!'});
     if(amount<0 && u.balance+amount<0) return json(res,200,{ok:false,error:'Không đủ số dư!'});
     u.balance+=amount; saveDB();
+    Supabase.syncUser(u);
     return json(res,200,{ok:true, balance:u.balance});
   }
 
@@ -333,5 +471,6 @@ server.listen(CFG.port, ()=>{
   log(`  TÀI XỈU SERVER ▶ http://localhost:${CFG.port}`);
   log(`  Chu kỳ ván: ${CFG.betPhase+CFG.lockPhase+CFG.resultPhase}s (mở cược ${CFG.betPhase}s)${FAST?' — CHẾ ĐỘ FAST':''}`);
   log(`  Người chơi đã lưu: ${Object.keys(DB.users).length}`);
+  log(`  Cơ sở dữ liệu: ${Supabase.enabled ? '⚡ SUPABASE CLOUD DATABASE' : '📁 TẬP TIN CỤC BỘ (tx_data.json)'}`);
   log(`════════════════════════════════════════════`);
 });
