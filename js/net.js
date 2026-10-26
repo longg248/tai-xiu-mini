@@ -66,9 +66,9 @@ const Net={
     refresh();
   },
   applyHistory(list){
-    state.history=list.map(h=>({sum:h.sum,result:h.result,dice:h.dice,bet:0,pick:'',won:false,roundId:h.roundId,
-      fair:{mode:'fair',clientSeed:'round',nonce:h.roundId,dice:h.dice,sum:h.sum,result:h.result,
-            serverSeed:h.serverSeed,serverSeedHash:h.serverSeedHash,hmac:h.hmac}}));
+    /* Lịch sử bàn (soi cầu) — KHÔNG ghi đè state.history (lịch sử cược cá nhân) */
+    state.rounds=list.map(h=>({sum:h.sum,result:h.result,dice:h.dice,roundId:h.roundId}));
+    renderRoadmap();
     if($('histOverlay').classList.contains('open')) renderHist();
   },
   applyTick(t){
@@ -82,11 +82,13 @@ const Net={
     if(t.pools){ state.poolTai=t.pools.tai; state.poolXiu=t.pools.xiu; }
     state.rolling = t.phase!=='betting';      /* chốt cược + kết quả = khóa bàn */
 
-    /* Chuyển sang phase locked (Chốt cược) → kích hoạt animation xốc đĩa
-       (bỏ qua khi đang ở sảnh/bàn bài để không nghe tiếng xúc xắc) */
+    /* Chuyển sang phase locked (Chốt cược) → xóc đĩa suốt giai đoạn chốt cược.
+       (bỏ qua khi đang ở sảnh/bàn bài để không nghe tiếng xúc xắc)
+       Lưu ý: KHÔNG kiểm tra Dish.opened ở đây — cờ đó còn true từ ván trước (đĩa đã bay đi),
+       sẽ khiến ván mới không được xóc. Dish.shake() tự gọi cover() để reset. */
     const inCards = (typeof CardsUI !== 'undefined' && !!CardsUI.active);
-    if(!inCards && oldPhase==='betting' && t.phase==='locked' && !Dish.opened && !Dish.shaking){
-      Dish.shake(Math.min(800, Math.max(400, this.msLeft - 400)));
+    if(!inCards && oldPhase==='betting' && t.phase==='locked' && !Dish.shaking){
+      Dish.shake(Math.max(600, Math.min(4800, this.msLeft - 300)));
     }
 
     const bar=$('roundBar');

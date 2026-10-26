@@ -30,24 +30,41 @@ const Dish={
   /* Animation XỐC ĐĨA chân thật */
   shake(durationMs=2400, onDone){
     this.cover();
+    clearTimeout(this._shakeT);
     this.shaking=true;
+    this._shakeDone=onDone||null;
     this.el.classList.add('shaking');
     const ring=$('ring');
     if(ring) ring.classList.add('shaking');
 
-    /* Không phát tiếng xúc xắc khi đang ở sảnh/bàn bài */
-    if(!(typeof CardsUI !== 'undefined' && CardsUI.active)) Sound.shakeDice(durationMs);
+    /* Không phát tiếng xúc xắc khi đang ở sảnh/bàn bài.
+       Giới hạn âm thanh ~1.6s để không tạo quá nhiều oscillator (nguyên nhân delay âm thanh). */
+    if(!(typeof CardsUI !== 'undefined' && CardsUI.active)) Sound.shakeDice(Math.min(durationMs, 1600));
     const hint=this.el.querySelector('.dish-hint');
     if(hint) hint.textContent='🎲 ĐANG XỐC ĐĨA…';
 
-    setTimeout(()=>{
-      this.shaking=false;
+    this._shakeT=setTimeout(()=>{
+      this._shakeT=null; this._shakeDone=null;
+      this.shaking=false; this._lastShakeEnd=Date.now();
       this.el.classList.remove('shaking');
       if(ring) ring.classList.remove('shaking');
       if(!(typeof CardsUI !== 'undefined' && CardsUI.active)) Sound.thud();
       if(hint) hint.textContent='🖱 Giữ & KÉO dĩa theo hướng bạn muốn để nặn!';
       if(onDone) onDone();
     }, durationMs);
+  },
+
+  /* Dừng xóc ngay lập tức (khi kết quả về sớm hơn dự kiến) — tránh treo chờ autoReveal */
+  stopShake(){
+    if(!this.shaking) return;
+    clearTimeout(this._shakeT); this._shakeT=null;
+    this.shaking=false; this._lastShakeEnd=Date.now();
+    this.el.classList.remove('shaking');
+    const ring=$('ring'); if(ring) ring.classList.remove('shaking');
+    const hint=this.el.querySelector('.dish-hint');
+    if(hint) hint.textContent='🖱 Giữ & KÉO dĩa theo hướng bạn muốn để nặn!';
+    const cb=this._shakeDone; this._shakeDone=null;
+    if(cb) cb();
   },
 
   cover(){
@@ -172,13 +189,17 @@ const Dish={
   },
 
   autoReveal(){
-    if(!this.busy || this.shaking) return;
-    /* Tự động kéo nặn xéo xuống trái để lộ dần từng viên */
+    if(this.opened) return;
+    /* Nếu đang xóc hoặc người chơi đang kéo dở → thử lại sau, không bỏ rơi kết quả */
+    if(this.shaking){ setTimeout(()=>this.autoReveal(), 300); return; }
+    if(this.dragging){ setTimeout(()=>this.autoReveal(), 500); return; }
+    if(!this.busy) return;
+    /* Tự động kéo nặn xéo xuống trái để lộ dần từng viên — nhanh (tổng 480ms) để kết quả hiện tức thì */
     const steps=[
       { dx:0,   dy:45,  ms:0 },
-      { dx:-45, dy:75,  ms:450 },
-      { dx:-90, dy:110, ms:900 },
-      { dx:-140,dy:140, ms:1350 }
+      { dx:-45, dy:75,  ms:160 },
+      { dx:-90, dy:110, ms:320 },
+      { dx:-140,dy:140, ms:480 }
     ];
     steps.forEach(({dx,dy,ms},idx)=>setTimeout(()=>{
       if(!this.busy || this.dragging || this.opened) return;

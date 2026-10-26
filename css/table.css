@@ -23,15 +23,12 @@
     box-shadow:inset 0 0 26px rgba(255,200,90,.16), 0 0 10px rgba(255,200,90,.22);
     pointer-events:none;
   }
-  /* quét sáng kim loại */
+  /* quét sáng kim loại (tĩnh — bỏ animation background-position gây repaint liên tục, nguyên nhân lag) */
   .board::after {
     content:""; position:absolute; inset:0; border-radius:26px; z-index:2;
     background:linear-gradient(115deg, transparent 32%, rgba(255,220,140,.05) 44%, rgba(255,255,255,.14) 50%, rgba(255,220,140,.05) 56%, transparent 68%);
-    background-size:240% 100%;
-    animation:sweep 7s linear infinite;
     pointer-events:none;
   }
-  @keyframes sweep { 0%{background-position:130% 0} 100%{background-position:-130% 0} }
 
 /* ===== TIÊU ĐỀ ===== */
   .title {
@@ -200,9 +197,9 @@
   .die.pop .face { animation:pop .35s ease; }
   @keyframes pop { 0%{transform:scale(.6)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
 
-/* ===== THANH CƯỢC + SỐ LỚN GIỮA BÀNG ===== */
+/* ===== THANH CƯỢC + SOI CẦU + SỐ LỚN GIỮA BÀN ===== */
   .bet-bar {
-    position:absolute; left:50%; top:496px; transform:translateX(-50%); z-index:5;
+    position:absolute; left:50%; top:488px; transform:translateX(-50%); z-index:5;
     background:#0a0a0a; border:2px solid #c9971e; border-radius:999px;
     padding:4px 26px; font-size:16px; font-weight:900; color:#fff; letter-spacing:1px;
     box-shadow:0 5px 12px rgba(0,0,0,.7), inset 0 1px 2px rgba(255,220,150,.2);
@@ -210,8 +207,31 @@
   }
   .bet-bar:hover { border-color:#ffd97a; transform:translateX(-50%) scale(1.05); }
   .bet-bar:active { transform:translateX(-50%) scale(.96); }
+  /* ===== SOI CẦU: lịch sử kết quả (TÀI = đen, XỈU = trắng) ===== */
+  .roadmap {
+    position:absolute; left:50%; top:522px; transform:translateX(-50%); z-index:5;
+    display:flex; align-items:center; gap:9px;
+    background:rgba(0,0,0,.42); border:1px solid rgba(255,220,130,.22);
+    border-radius:999px; padding:3px 14px; max-width:640px;
+  }
+  .road-lbl {
+    font-size:9px; font-weight:900; letter-spacing:2px; color:#ffe08a;
+    text-shadow:0 1px 2px #000; white-space:nowrap;
+  }
+  .road-dots { display:flex; align-items:center; gap:5px; min-height:15px; }
+  .road-dot {
+    width:15px; height:15px; border-radius:50%; flex:0 0 auto;
+    border:1px solid rgba(255,255,255,.28);
+    box-shadow:inset 0 1px 2px rgba(255,255,255,.25), 0 1px 3px rgba(0,0,0,.75);
+    transition:transform .12s;
+  }
+  .road-dot.t { background:radial-gradient(circle at 35% 30%, #3a3a3a 0%, #0a0a0a 70%); border-color:#777; }  /* TÀI — đen */
+  .road-dot.x { background:radial-gradient(circle at 35% 30%, #ffffff 0%, #d8d8d8 75%); border-color:#f2f2f2; }  /* XỈU — trắng */
+  .road-dot.new { animation:dotIn .35s cubic-bezier(.3,1.6,.5,1); }
+  @keyframes dotIn { 0%{transform:scale(.2); opacity:0} 100%{transform:scale(1); opacity:1} }
+  .road-dot:hover { transform:scale(1.25); }
   .big-num {
-    position:absolute; left:0; top:530px; width:100%; text-align:center; z-index:5;
+    position:absolute; left:0; top:552px; width:100%; text-align:center; z-index:5;
     font-size:40px; font-weight:900; color:#fff; letter-spacing:1px;
     text-shadow:0 3px 8px rgba(0,0,0,.9), 0 0 22px rgba(255,255,255,.18);
     pointer-events:none;
@@ -364,9 +384,7 @@
     animation: dishShake .16s linear infinite;
     will-change: transform;
   }
-  .dish-cover.shaking .dish-bowl {
-    filter: brightness(1.15);
-  }
+  /* bỏ filter brightness khi xóc — filter trên cây animation buộc GPU raster lại mỗi khung hình */
   @keyframes dishShake {
     0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
     20%  { transform: translate3d(-6px, -12px, 0) rotate(-3deg) scale(1.02); }

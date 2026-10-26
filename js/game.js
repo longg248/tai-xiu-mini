@@ -10,7 +10,7 @@ function saveKeyFor(u){ return (!u||u.key==='guest') ? 'taixiu_save_v1' : 'taixi
 
 
 /* ===== trạng thái =====*/
-const state = { balance:3960000, bet:0, side:null, rolling:false, poolTai:741648460, poolXiu:741648460, history:[],
+const state = { balance:3960000, bet:0, side:null, rolling:false, poolTai:741648460, poolXiu:741648460, history:[], rounds:[],
                 promo:{ lastDaily:'', missions:0, cashback:0, notify:{} } };
 
 const $ = id => document.getElementById(id);
@@ -53,7 +53,8 @@ function refresh(){
   els.betBar.textContent  = fmtComma(state.bet);
   /* ô số lớn: đóng băng trong lúc trận chạy để tiền thưởng không "dính" vào kết quả trận */
   const showBal = (state.rolling && typeof state._frozenBal==='number') ? state._frozenBal : state.balance;
-  els.bigNum.innerHTML    = `<span class="plus">+</span>${fmtComma(showBal)}`;
+  const balTxt = `<span class="plus">+</span>${fmtComma(showBal)}`;
+  if(els.bigNum._t !== balTxt){ els.bigNum._t = balTxt; els.bigNum.innerHTML = balTxt; }   /* chỉ ghi DOM khi đổi */
   const pb=$('pageBalance'); if(pb) pb.textContent=fmtComma(state.balance);   /* số dư trên đầu trang riêng */
 
   els.btnTai.classList.toggle('sel', state.side==='tai');
@@ -203,13 +204,35 @@ function onRoundResult(d){
               serverSeed:d.serverSeed, serverSeedHash:d.serverSeedHash, hmac:d.hmac};
   const info={ hadBet:!!state.myBet, myPick:state.myBet?state.myBet.side:null, myAmt:state.myBet?state.myBet.amount:0 };
   state.rolling=true;
+  /* soi cầu: ghi kết quả bàn ngay khi server trả về (chấm đen/trắng hiện tức thì) */
+  state.rounds=state.rounds||[];
+  if(!state.rounds.length || state.rounds[0].roundId!==d.roundId){
+    state.rounds.unshift({roundId:d.roundId, dice:d.dice, sum:d.sum, result:d.result});
+    state.rounds=state.rounds.slice(0,30);
+  }
+  renderRoadmap();
   els.d.forEach(d=>d.classList.remove('rolling'));
   els.cellTai.textContent='0'; els.cellXiu.textContent='0';
   state.myBet=null;
   revealFair(fair, info);
 }
+/* ===== SOI CẦU: lịch sử kết quả bàn — TÀI = chấm đen, XỈU = chấm trắng ===== */
+function renderRoadmap(){
+  const box=$('roadDots'); if(!box) return;
+  const list=(state.rounds||[]).slice(0,24).reverse();   /* cũ → mới: kết quả mới nhất nằm bên phải */
+  const sig=list.map(h=>h.roundId+':'+h.result).join(',');   /* chỉ vẽ lại khi có kết quả mới */
+  if(box._sig===sig) return;
+  box._sig=sig;
+  box.innerHTML=list.map(h=>{
+    const t=h.result==='T';
+    const tip=(t?'TÀI':'XỈU')+(h.sum!=null?' · '+h.sum+' điểm':'')+(h.roundId?' · #'+h.roundId:'');
+    return `<span class="road-dot ${t?'t':'x'}" title="${tip}"></span>`;
+  }).join('');
+  const last=box.lastElementChild; if(last) last.classList.add('new');
+}
 async function revealFair(fair, info){
   els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('pop','reveal'); });
+  Dish.peeked=[false,false,false];   /* tránh trạng thái cũ của ván trước khi ván mới không kịp cover() */
 
   /* Đang ở sảnh bài: bỏ toàn bộ animation/âm thanh xúc xắc, chỉ cập nhật số dư.
      Vẫn úp lại đĩa (không phát âm thanh) để ván sau ở bàn Tài Xỉu hiển thị đúng. */
@@ -228,20 +251,23 @@ async function revealFair(fair, info){
     els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('reveal'); });
   };
 
-  /* Xốc đĩa: nếu chưa đang xóc (ví dụ kết nối trễ) thì xóc ngắn 500ms.
-     Nếu đã xóc từ giai đoạn chốt cược (applyTick) thì bỏ qua để không trễ hai lần. */
-  if(!Dish.shaking){
-    await new Promise(res => Dish.shake(500, res));
+  /* Kết quả về → DỪNG xóc ngay (không xóc lại lần 2 — đây là nguyên nhân trễ chính).
+     Nếu vì lý do nào đó chưa từng xóc (vào trễ/mất SSE), xóc nhanh 160ms cho có nhịp. */
+  if(Dish.shaking){
+    Dish.stopShake();
+  } else if(!Dish.opened && !(Dish._lastShakeEnd && Date.now()-Dish._lastShakeEnd < 8000)){
+    await new Promise(res => Dish.shake(160, res));
   }
-  await sleep(150);
+  await sleep(60);
 
   await new Promise(res=>{
     Dish.onOpen=res;
     if(Dish.opened){ Dish.onOpen=null; res(); }
-    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 300);   /* không cược → tự mở nhanh */
-    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 200);     /* AUTO tự mở nhanh */
+    else if(!info.hadBet) setTimeout(()=>Dish.autoReveal(), 100);   /* không cược → tự mở ngay */
+    else if(auto.active) setTimeout(()=>Dish.autoReveal(), 100);     /* AUTO tự mở ngay */
+    else setTimeout(()=>Dish.autoReveal(), 1200);                    /* có cược: ưu tiên người chơi nặn, quá 1.2s tự mở */
   });
-  await sleep(620);                                 /* chờ animation dĩa bay */
+  await sleep(180);                                 /* dĩa bay phần lớn — không chặn kết quả lâu */
   for(let i=0;i<3;i++) if(!Dish.peeked[i]) Dish.peekAt(i);  /* đảm bảo đủ 3 số */
   els.d.forEach(d=>{
     d.classList.add('pop');
@@ -301,7 +327,7 @@ function settle(fair, info){
     refresh(); saveGame(); refreshDrawer();
     if($('histOverlay').classList.contains('open')) renderHist();
     if(state._resolve){ const r=state._resolve; state._resolve=null; r(won); }
-  }, 550);
+  }, 120);
 }
 
 
