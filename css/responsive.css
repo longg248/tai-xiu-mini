@@ -15,6 +15,26 @@
     width:auto !important; max-height:58% !important; height:auto !important;
   }
   @keyframes histUp { from{transform:translateY(90px); opacity:0} to{transform:none; opacity:1} }
+  /* mobile: KHUYNH HƯỚNG — panel gần full màn hình, thu nhỏ chấm cho vừa */
+  body.mobile .trend-overlay { padding:6px; backdrop-filter:none; background:rgba(0,0,0,.88); }
+  body.mobile .trend-panel { --trend-close:clamp(34px,7vw,58px); width:90vw; max-height:96vh; border-radius:10px; }
+  body.mobile .trend-head { height:clamp(34px,6vw,50px); padding:0 clamp(44px,7vw,58px); gap:8px; }
+  body.mobile .trend-head b { font-size:clamp(14px,2.6vw,24px); letter-spacing:clamp(2px,.4vw,4px); }
+  body.mobile .trend-head-deco { flex-basis:10%; height:clamp(16px,2.4vw,24px); opacity:.45; }
+  body.mobile .trend-close { border-width:2px; right:clamp(8px,1.6vw,14px); }
+  body.mobile .trend-body { padding:clamp(7px,1.4vw,12px) clamp(7px,1.6vw,12px); }
+  body.mobile .trend-stats { gap:clamp(24px,22vw,200px); margin-bottom:clamp(6px,1.6vw,14px); }
+  body.mobile .trend-stat { width:clamp(76px,12.8vw,110px); height:clamp(22px,2.7vw,26px); gap:6px; }
+  body.mobile .trend-stat b { font-size:clamp(12px,1.8vw,16px); }
+  body.mobile .trend-stat .trend-dot { width:clamp(14px,2vw,18px); height:clamp(14px,2vw,18px); }
+  body.mobile .trend-chart { --trend-arrow:clamp(8px,1.2vw,12px); --trend-line:2px; padding:0 6%; margin-bottom:clamp(7px,1.5vw,12px); }
+  body.mobile .trend-row { height:clamp(18px,3.4vw,28px); }
+  body.mobile .trend-cell .trend-dot { width:clamp(11px,2.3vw,18px); height:clamp(11px,2.3vw,18px); }
+  body.mobile .trend-arrow.right,
+  body.mobile .trend-arrow.left { border-top-width:5px; border-bottom-width:5px; }
+  body.mobile .trend-score { min-height:clamp(20px,3.7vw,30px); font-size:clamp(9px,1.9vw,15px); }
+  body.mobile .trend-score.x::before { width:clamp(15px,3.1vw,26px); height:clamp(15px,3.1vw,26px); }
+  body.mobile .trend-pager { padding-top:5px; }
   body.mobile .poster { display:none; }        /* bỏ poster hai bên cho gọn */
   body.mobile .bg-card { display:none; }        /* bớt hiệu năng trên điện thoại */
   body.mobile .home-screen,

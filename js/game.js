@@ -211,6 +211,16 @@ function onRoundResult(d){
     state.rounds=state.rounds.slice(0,30);
   }
   renderRoadmap();
+  /* KHUYNH HƯỚNG đang mở → cập nhật ngay ván mới */
+  if(trendOpen()){
+    if(Array.isArray(state.trend)){
+      if(!state.trend.some(x=>x.roundId===d.roundId)){
+        state.trend.unshift({roundId:d.roundId, dice:d.dice, sum:d.sum, result:d.result});
+        state.trend=state.trend.slice(0,120);
+      }
+    }
+    renderTrend();
+  }
   els.d.forEach(d=>d.classList.remove('rolling'));
   els.cellTai.textContent='0'; els.cellXiu.textContent='0';
   state.myBet=null;
@@ -229,6 +239,162 @@ function renderRoadmap(){
     return `<span class="road-dot ${t?'t':'x'}" title="${tip}"></span>`;
   }).join('');
   const last=box.lastElementChild; if(last) last.classList.add('new');
+}
+
+/* ===== KHUYNH HƯỚNG (phím L) — biểu đồ cầu 5×20 + bảng điểm 20×5 ===== */
+const TREND_CHART_COLS=20, TREND_CHART_ROWS=5;
+const TREND_SCORE_COLS=20, TREND_SCORE_ROWS=5;
+const TREND_CHART_CAP=TREND_CHART_COLS*TREND_CHART_ROWS;
+
+function trendOpen(){ const o=$('trendOverlay'); return !!(o && o.classList.contains('open')); }
+
+function openTrend(){
+  const o=$('trendOverlay'); if(!o) return;
+  o.classList.add('open');
+  renderTrend();          /* vẽ ngay từ dữ liệu đang có */
+  loadTrend();            /* rồi lấy đủ 120 ván từ server */
+}
+
+function closeTrend(){
+  const o=$('trendOverlay'); if(o) o.classList.remove('open');
+}
+
+function toggleTrend(){ trendOpen() ? closeTrend() : openTrend(); }
+
+async function loadTrend(){
+  try{
+    const r=await fetch('/api/trend?t='+Date.now(),{cache:'no-store'});
+    const j=await r.json();
+    if(j && j.ok && Array.isArray(j.history)){
+      state.trend=j.history;
+      if(trendOpen()) renderTrend();
+    }
+  }catch(e){ /* offline / server cũ → dùng state.rounds */ }
+}
+
+/* cũ → mới, tối đa 120 ván */
+function trendList(){
+  const src=(state.trend && state.trend.length) ? state.trend : (state.rounds||[]);
+  return src.slice(0,120).slice().sort((a,b)=>(a.roundId||0)-(b.roundId||0));
+}
+
+function trendTip(h){
+  return (h.result==='T'?'TÀI':'XỈU')+(h.sum!=null?' · '+h.sum+' điểm':'')+(h.roundId?' · #'+h.roundId:'');
+}
+
+function renderTrend(){
+  const o=$('trendOverlay'); if(!o) return;
+  const list=trendList();                       /* cũ → mới */
+  const recent=list.slice(-TREND_CHART_CAP);    /* 100 ván mới nhất */
+  const newest=recent.slice().reverse();        /* mới → cũ */
+  const nT=recent.filter(h=>h.result==='T').length;
+  const nX=recent.length-nT;
+
+  /* 2 bộ đếm: chấm + SỐ VÁN (đúng ảnh, không phải %) */
+  const stats=$('trendStats');
+  if(stats){
+    stats.innerHTML=
+      `<div class="trend-stat t" aria-label="Tài ${nT} ván"><i class="trend-dot t"></i><b>${nT}</b></div>`+
+      `<div class="trend-stat x" aria-label="Xỉu ${nX} ván"><i class="trend-dot x"></i><b>${nX}</b></div>`;
+  }
+
+  /* Biểu đồ: 5 hàng × 20 cột = 100 ván.
+     Mới nhất ở hàng 1 cột 20; hàng 1 chạy phải→trái, hàng 2 trái→phải,
+     hàng 3 phải→trái, hàng 4 trái→phải, hàng 5 phải→trái. */
+  const grid=Array.from({length:TREND_CHART_ROWS},()=>Array(TREND_CHART_COLS).fill(null));
+  newest.forEach((h,i)=>{
+    if(i>=TREND_CHART_CAP) return;
+    const row=Math.floor(i/TREND_CHART_COLS);
+    const pos=i%TREND_CHART_COLS;
+    const col=(row%2===0) ? (TREND_CHART_COLS-1-pos) : pos;
+    grid[row][col]=h;
+  });
+
+  /* ô cũ nhất để đặt mũi tên đuôi cầu.
+     Hàng đầy đủ: mũi tên hướng ra ngoài theo chiều điền của hàng.
+     Hàng cuối còn thiếu: ô cũ nhất nằm giữa hàng nên luôn hướng trái. */
+  let tail=null;
+  if(newest.length){
+    const i=Math.min(newest.length,TREND_CHART_CAP)-1;
+    const row=Math.floor(i/TREND_CHART_COLS);
+    const pos=i%TREND_CHART_COLS;
+    const col=(row%2===0) ? (TREND_CHART_COLS-1-pos) : pos;
+    const fullRow=newest.length>=(row+1)*TREND_CHART_COLS;
+    const dir=fullRow ? ((row%2===0)?'left':'right') : 'left';
+    tail={row,col,dir};
+  }
+
+  const chart=$('trendChart');
+  if(chart){
+    let html='';
+    for(let r=0;r<TREND_CHART_ROWS;r++){
+      const cells=grid[r];
+      let last=-1;
+      for(let c=0;c<TREND_CHART_COLS;c++) if(cells[c]) last=c;
+      let rowHtml='';
+      for(let c=0;c<TREND_CHART_COLS;c++){
+        const h=cells[c];
+        if(!h){ rowHtml+='<span class="trend-cell empty"></span>'; continue; }
+        const t=h.result==='T';
+        const cls=['trend-cell',t?'t':'x'];
+        if(c<last && cells[c+1]) cls.push('line');
+        if(r<TREND_CHART_ROWS-1){
+          const turn=(r%2===0)?0:(TREND_CHART_COLS-1);
+          if(c===turn && grid[r+1][c]) cls.push('vlink');
+        }
+        let extra='';
+        const isHead=(r===0 && c===TREND_CHART_COLS-1);
+        if(isHead){
+          cls.push('head');
+          extra+='<i class="trend-arrow-line right"></i><i class="trend-arrow right"></i>';
+        }
+        if(tail && tail.row===r && tail.col===c && !isHead){
+          cls.push('tail');
+          extra+=`<i class="trend-arrow-line ${tail.dir}"></i><i class="trend-arrow ${tail.dir}"></i>`;
+        }
+        rowHtml+=`<span class="${cls.join(' ')}" title="${trendTip(h)}"><i class="trend-dot ${t?'t':'x'}"></i>${extra}</span>`;
+      }
+      html+=`<div class="trend-row">${rowHtml}</div>`;
+    }
+    chart.innerHTML=html;
+  }
+
+  /* Bảng điểm: 20 cột × 5 hàng.
+     Quét mới→cũ; mỗi cột là một chuỗi cùng bên (tối đa 5 ô);
+     đổi bên hoặc đầy cột thì sang cột mới bên trái.
+     Cột mới nhất ngoài cùng bên phải; trong cột, mới nhất ở trên. */
+  const scores=$('trendScores');
+  if(scores){
+    const cols=[];                              /* mới nhất → cũ nhất */
+    let cur=[], side=null;
+    for(const h of newest){
+      if(cols.length>=TREND_SCORE_COLS) break;
+      if(cur.length && h.result!==side){
+        cols.push(cur); cur=[];
+        if(cols.length>=TREND_SCORE_COLS) break;
+      }else if(cur.length>=TREND_SCORE_ROWS){
+        cols.push(cur); cur=[];
+        if(cols.length>=TREND_SCORE_COLS) break;
+      }
+      side=h.result;
+      cur.push(h);
+    }
+    if(cur.length && cols.length<TREND_SCORE_COLS) cols.push(cur);
+
+    const display=cols.slice(0,TREND_SCORE_COLS).reverse();  /* cũ → mới, trái → phải */
+    const pad=TREND_SCORE_COLS-display.length;
+    let html='';
+    for(let r=0;r<TREND_SCORE_ROWS;r++){
+      for(let c=0;c<TREND_SCORE_COLS;c++){
+        const col=(c<pad)?null:display[c-pad];
+        const h=col?col[r]:null;
+        if(!h){ html+='<span class="trend-score empty"></span>'; continue; }
+        const t=h.result==='T';
+        html+=`<span class="trend-score ${t?'t':'x'}" title="${trendTip(h)}"><i>${h.sum!=null?h.sum:'—'}</i></span>`;
+      }
+    }
+    scores.innerHTML=html;
+  }
 }
 async function revealFair(fair, info){
   els.d.forEach(d=>{ d.querySelector('.face').innerHTML=''; d.classList.remove('pop','reveal'); });

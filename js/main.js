@@ -10,7 +10,7 @@ let rotDismissed=false;
    Nhờ vậy điện thoại không còn thấy giao diện thu nhỏ tí hon và laptop
    không bị sọc đen 2 bên do khung 16:9 bị co lại. */
 (function detachFluidScreens(){
-  ['authScreen','homeScreen','pageScreen','rotateHint','autoModal','histOverlay','toast'].forEach(id=>{
+  ['authScreen','homeScreen','pageScreen','rotateHint','autoModal','histOverlay','trendOverlay','toast'].forEach(id=>{
     const el = document.getElementById(id);
     if(el && el.parentElement && el.parentElement.id === 'stage'){
       el.classList.add('fluid-screen');
@@ -73,6 +73,12 @@ $('optSide').querySelectorAll('button').forEach(b=>b.onclick=()=>{ auto.pick=b.d
 $('autoClose').onclick = ()=>$('autoModal').classList.remove('open');
 $('autoStart').onclick = ()=>{ $('autoModal').classList.remove('open'); startAuto(); };
 
+/* KHUYNH HƯỚNG: nút đóng, bấm nền, bấm hàng soi cầu trên bàn */
+const trendCloseBtn=$('trendClose'); if(trendCloseBtn) trendCloseBtn.onclick=()=>closeTrend();
+const trendOv=$('trendOverlay');
+if(trendOv) trendOv.addEventListener('click', e=>{ if(e.target===trendOv) closeTrend(); });
+const roadmapEl=$('roadmap'); if(roadmapEl) roadmapEl.onclick=()=>toggleTrend();
+
 /* ---------- PHÍM TẮT ---------- */
 addEventListener('keydown', e=>{
   if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
@@ -84,10 +90,10 @@ addEventListener('keydown', e=>{
   else if(k==='h') els.btnCancel.click();
   else if(k==='a') els.btnAllIn.click();
   else if(k==='m') toggleSound();
-  else if(k==='l') toggleDrawer('hist');
+  else if(k==='l') toggleTrend();
   else if(k==='s') toggleDrawer('stats');
   else if(k==='r') toggleDrawer('rank');
-  else if(k==='escape'){ closeModal(); $('autoModal').classList.remove('open'); if(auto.active){ auto.active=false; toast('Đã dừng AUTO'); } }
+  else if(k==='escape'){ closeTrend(); closeModal(); $('autoModal').classList.remove('open'); if(auto.active){ auto.active=false; toast('Đã dừng AUTO'); } }
   else if(/^[1-8]$/.test(k)){ const c=els.chips[+k-1]; if(c) c.click(); }
 });
 

@@ -164,6 +164,8 @@ let SEED_CUR='', MSG_CUR='';
 let DB = { users:{}, sessions:{} };
 async function loadDB(){
   try{ DB=JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }catch(e){ DB={users:{},sessions:{}}; }
+  /* khôi phục lịch sử bàn (soi cầu / khuy nh hướng) sau khi restart */
+  if(Array.isArray(DB.rounds) && DB.rounds.length) S.history=DB.rounds.slice(0,120);
   if(Supabase.enabled){
     await Supabase.loadAll();
   }
@@ -237,7 +239,11 @@ function roll(){
   };
   S.history.unshift({roundId:S.roundId, dice, sum, result,
     serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac});
-  S.history=S.history.slice(0,40);
+  S.history=S.history.slice(0,120);
+  /* lưu lịch sử bàn vào DB để khôi phục sau restart */
+  DB.rounds=DB.rounds||[];
+  DB.rounds.unshift({roundId:S.roundId, dice, sum, result});
+  DB.rounds=DB.rounds.slice(0,120);
   saveDB();
   Supabase.recordRound({roundId:S.roundId, dice, sum, result, serverSeed:S.serverSeed, serverSeedHash:S.serverSeedHash, hmac});
   for(const [tok] of Object.entries(S.bets)){
@@ -365,6 +371,10 @@ const server=http.createServer(async (req,res)=>{
   /* --- state --- */
   if(p==='/api/state'){
     return json(res,200, fullState(url.searchParams.get('token')||''));
+  }
+  /* --- lịch sử bàn cho KHUYNH HƯỚNG (tối đa 120 ván) --- */
+  if(p==='/api/trend'){
+    return json(res,200, {ok:true, history:S.history.slice(0,120)});
   }
   /* --- auth --- */
   if(p==='/api/register' && req.method==='POST'){
