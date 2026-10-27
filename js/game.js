@@ -272,10 +272,12 @@ async function loadTrend(){
   }catch(e){ /* offline / server cũ → dùng state.rounds */ }
 }
 
-/* cũ → mới, tối đa 120 ván */
+/* state.trend/state.rounds luôn mới → cũ; đảo thành cũ → mới, tối đa 120 ván.
+   Không sort theo roundId vì sau khi server restart, roundId có thể reset
+   và các ván cũ sẽ chen lên trước các ván mới. */
 function trendList(){
   const src=(state.trend && state.trend.length) ? state.trend : (state.rounds||[]);
-  return src.slice(0,120).slice().sort((a,b)=>(a.roundId||0)-(b.roundId||0));
+  return src.slice(0,120).reverse();
 }
 
 function trendTip(h){

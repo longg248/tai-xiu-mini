@@ -165,7 +165,11 @@ let DB = { users:{}, sessions:{} };
 async function loadDB(){
   try{ DB=JSON.parse(fs.readFileSync(DATA_FILE,'utf8')); }catch(e){ DB={users:{},sessions:{}}; }
   /* khôi phục lịch sử bàn (soi cầu / khuy nh hướng) sau khi restart */
-  if(Array.isArray(DB.rounds) && DB.rounds.length) S.history=DB.rounds.slice(0,120);
+  if(Array.isArray(DB.rounds) && DB.rounds.length){
+    S.history=DB.rounds.slice(0,120);
+    /* tiếp tục đúng số ván đang chạy, tránh reset roundId về 0 */
+    S.roundId=Number(DB.rounds[0].roundId)||0;
+  }
   if(Supabase.enabled){
     await Supabase.loadAll();
   }

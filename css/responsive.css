@@ -33,6 +33,7 @@
   body.mobile .trend-arrow.right,
   body.mobile .trend-arrow.left { border-top-width:5px; border-bottom-width:5px; }
   body.mobile .trend-score { min-height:clamp(20px,3.7vw,30px); font-size:clamp(9px,1.9vw,15px); }
+  body.mobile .trend-score.t::before,
   body.mobile .trend-score.x::before { width:clamp(15px,3.1vw,26px); height:clamp(15px,3.1vw,26px); }
   body.mobile .trend-pager { padding-top:5px; }
   body.mobile .poster { display:none; }        /* bỏ poster hai bên cho gọn */

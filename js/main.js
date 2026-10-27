@@ -62,7 +62,7 @@ $('ibClose').onclick = ()=>{ if(confirm('Thoát trò chơi?')) location.reload()
 
 /* ---------- GẮN SỰ KIỆN ---------- */
 $('tbSound').onclick  = toggleSound;
-$('tbHistory').onclick= ()=>toggleDrawer('hist');
+$('tbHistory').onclick= ()=>toggleTrend();   /* nút lịch sử trên toolbar → KHUYNH HƯỚNG */
 $('tbStats').onclick  = ()=>toggleDrawer('stats');
 $('tbAuto').onclick   = ()=>{ if(auto.active){ auto.active=false; toast('Đã dừng AUTO'); } else openAutoModal(); };
 $('tbTheme').onclick  = cycleTheme;
